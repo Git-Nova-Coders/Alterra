@@ -5,7 +5,8 @@
 export const ROLES = [
   {
     id: 'infiltrator',
-    name: 'Ghost Operative',
+    codeName: 'HACKER',
+    name: 'Ghost Operative (Hacker)',
     category: 'Subterfuge & Data',
     description: 'Expert in stealth, cryptography, and bypassing sensory tripwires.',
     skill: 'Bypass Security Systems',
@@ -14,7 +15,8 @@ export const ROLES = [
   },
   {
     id: 'archivist',
-    name: 'Cosmic Chronicler',
+    codeName: 'EXPLORER',
+    name: 'Cosmic Chronicler (Explorer)',
     category: 'Lore & Analysis',
     description: 'Decipherer of ancient glyphs, lost frequencies, and anomalous anomalies.',
     skill: 'Translate Forgotten Tech',
@@ -23,7 +25,8 @@ export const ROLES = [
   },
   {
     id: 'synthesizer',
-    name: 'Aether Shaper',
+    codeName: 'GUARDIAN',
+    name: 'Aether Shaper (Guardian)',
     category: 'Engineering & Resonance',
     description: 'A conduit of mechanical and organic transmutation who can reshape raw energy.',
     skill: 'Transmute Relics',
@@ -35,19 +38,22 @@ export const ROLES = [
 export const TRAITS = [
   {
     id: 'hyperfocused',
-    name: 'Hyper-Vigilant',
+    codeName: 'CURIOUS',
+    name: 'Hyper-Vigilant (Curious)',
     effect: 'Detect hidden object signatures before entering rooms.',
     badge: 'Tactical'
   },
   {
     id: 'harmonic',
-    name: 'Resonant Attunement',
+    codeName: 'CAUTIOUS',
+    name: 'Resonant Attunement (Cautious)',
     effect: 'Empathize with world ecosystems, calming aggressive entities.',
     badge: 'Mystic'
   },
   {
     id: 'daring',
-    name: 'Overclocked Reflexes',
+    codeName: 'BRAVE',
+    name: 'Overclocked Reflexes (Brave)',
     effect: 'High bonus during timed reaction mini-challenges.',
     badge: 'Kinetic'
   }

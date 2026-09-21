@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGameState } from '../context/GameStateContext';
-import { Compass, Shield, Zap, RefreshCw, Cpu, Activity } from 'lucide-react';
+import { Compass, Shield, Zap, RefreshCw, Cpu, Activity, Volume2, VolumeX } from 'lucide-react';
+import { AudioService } from '../services/audioService';
 
 export default function HUD() {
   const { state, resetGame } = useGameState();
   const { world, mood, intensity, chaos, role, currentStage, inventory } = state;
+  const [isMuted, setIsMuted] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 border-b border-cyan-500/20 bg-[#070b14]/85 backdrop-blur-md">
@@ -69,7 +71,19 @@ export default function HUD() {
         </div>
 
         {/* Global Controls */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
+          <button
+            onClick={() => {
+              const muted = AudioService.toggleMute();
+              setIsMuted(muted);
+            }}
+            title={isMuted ? "Unmute Audio" : "Mute Audio"}
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-slate-700/80 bg-slate-900/60 hover:border-cyan-500/50 hover:bg-cyan-950/30 text-xs font-mono text-slate-300 transition-colors"
+          >
+            {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-cyan-400" />}
+            <span className="hidden sm:inline">{isMuted ? 'Muted' : 'Sound'}</span>
+          </button>
+
           <button
             onClick={resetGame}
             title="Reset Simulation"

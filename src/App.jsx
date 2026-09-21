@@ -8,6 +8,17 @@ import WorldSelection from './components/WorldSelection';
 import WorldDirector from './components/WorldDirector';
 import MorphTransition from './components/MorphTransition';
 import GenericStageViewer from './components/GenericStageViewer';
+import RoleTraitSelection from './components/RoleTraitSelection';
+import ExplorationScene from './components/ExplorationScene';
+import EncounterScene from './components/EncounterScene';
+import ArtifactDiscovery from './components/ArtifactDiscovery';
+import ArtifactDecision from './components/ArtifactDecision';
+import WorldReaction from './components/WorldReaction';
+import MiniGame from './components/MiniGame';
+import FinalDecision from './components/FinalDecision';
+import AIEndingScene from './components/AIEndingScene';
+import RealitySummary from './components/RealitySummary';
+import CinematicJourneyRecap from './components/CinematicJourneyRecap';
 import { Shield, Sparkles, Compass, Terminal, Cpu, Flame, Target } from 'lucide-react';
 
 export default function App() {
@@ -33,158 +44,46 @@ export default function App() {
         return <MorphTransition />;
 
       case GAME_STAGES.WORLD_READY:
-        return (
-          <GenericStageViewer
-            stageName="WORLD READY"
-            title="SIMULATION BOUNDARIES INITIALIZED"
-            description="The world environment has compiled. Prepare to select your character archetype and operational trait."
-            nextStageName={GAME_STAGES.ROLE_SELECT}
-            icon={Compass}
-          />
-        );
+        return <RoleTraitSelection />;
 
       case GAME_STAGES.ROLE_SELECT:
-        return (
-          <GenericStageViewer
-            stageName="ROLE SELECTION"
-            title="CONSCIOUSNESS AVATAR ALIGNMENT"
-            description="Foundation prepared for Phase 2: Infiltrator, Archivist, or Synthesizer role selection."
-            nextStageName={GAME_STAGES.TRAIT_SELECT}
-            icon={Shield}
-          />
-        );
+        return <RoleTraitSelection />;
 
       case GAME_STAGES.TRAIT_SELECT:
-        return (
-          <GenericStageViewer
-            stageName="TRAIT SELECTION"
-            title="ATTUNE PRIMARY OPERATIONAL TRAIT"
-            description="Foundation prepared for Phase 2: Hyper-Vigilance, Resonant Attunement, or Overclocked Reflexes."
-            nextStageName={GAME_STAGES.EXPLORATION}
-            icon={Sparkles}
-          />
-        );
+        return <RoleTraitSelection />;
 
       case GAME_STAGES.EXPLORATION:
-        return (
-          <GenericStageViewer
-            stageName="EXPLORATION"
-            title="SECTOR EXPLORATION & OBJECT DISCOVERY"
-            description="Phase 2 hook: Interactive objects, sensory clues, and dynamic environmental discovery."
-            nextStageName={GAME_STAGES.ENCOUNTER}
-            icon={Compass}
-          />
-        );
+        return <ExplorationScene />;
 
       case GAME_STAGES.ENCOUNTER:
-        return (
-          <GenericStageViewer
-            stageName="ENCOUNTER"
-            title="CRITICAL ENTITY INTERACTION"
-            description="Phase 2 hook: Entity confrontation, dialogue branching, and world consequence engine."
-            nextStageName={GAME_STAGES.CONSEQUENCE}
-            icon={Flame}
-          />
-        );
+        return <EncounterScene />;
 
       case GAME_STAGES.CONSEQUENCE:
-        return (
-          <GenericStageViewer
-            stageName="CONSEQUENCE"
-            title="LOCAL REALITY PERTURBATION"
-            description="Consequence evaluation: The world alters state and unlocks the ancient artifact sanctum."
-            nextStageName={GAME_STAGES.ARTIFACT}
-            icon={Terminal}
-          />
-        );
+        return <EncounterScene />;
 
       case GAME_STAGES.ARTIFACT:
-        return (
-          <GenericStageViewer
-            stageName="ARTIFACT DISCOVERY"
-            title="ANOMALOUS RELIC UNCOVERED"
-            description={`Sanctum breached. Found relic: ${state.world?.artifact || 'Keystone of Origin'}.`}
-            nextStageName={GAME_STAGES.ARTIFACT_DECISION}
-            icon={Cpu}
-          />
-        );
+        return <ArtifactDiscovery />;
 
       case GAME_STAGES.ARTIFACT_DECISION:
-        return (
-          <GenericStageViewer
-            stageName="ARTIFACT DECISION"
-            title="CHOOSE RELIC HARMONIZATION"
-            description="Make your decision: Preserve the anomaly, commune with its signal, or consume its energy."
-            nextStageName={GAME_STAGES.WORLD_REACTION}
-            icon={Target}
-          />
-        );
+        return <ArtifactDecision />;
 
       case GAME_STAGES.WORLD_REACTION:
-        return (
-          <GenericStageViewer
-            stageName="WORLD REACTION"
-            title="BIOME RESPONSIVE TRANSFORMATION"
-            description="Watch the environment shift shaders, light arrays, and soundscapes based on your decision."
-            nextStageName={GAME_STAGES.MINI_CHALLENGE}
-            icon={Sparkles}
-          />
-        );
+        return <WorldReaction />;
 
       case GAME_STAGES.MINI_CHALLENGE:
-        return (
-          <GenericStageViewer
-            stageName="MINI CHALLENGE"
-            title="NEURAL OVERCLOCK MINI-CHALLENGE"
-            description="Timed node-deflection challenge to stabilize the regional reality matrix."
-            nextStageName={GAME_STAGES.FINAL_DECISION}
-            icon={Cpu}
-          />
-        );
+        return <MiniGame />;
 
       case GAME_STAGES.FINAL_DECISION:
-        return (
-          <GenericStageViewer
-            stageName="FINAL DECISION"
-            title="ULTIMATE CONVERGENCE CHOICE"
-            description="Choose your final stance: Ascend beyond the simulation, stabilize the world, or trigger divergence."
-            nextStageName={GAME_STAGES.AI_ENDING}
-            icon={Target}
-          />
-        );
+        return <FinalDecision />;
 
       case GAME_STAGES.AI_ENDING:
-        return (
-          <GenericStageViewer
-            stageName="AI ENDING SYNTHESIS"
-            title="NEURAL CHRONICLE COMPILATION"
-            description="The AI service digests your choices, chaos rating, and artifact fate into a unique destiny."
-            nextStageName={GAME_STAGES.RESULT}
-            icon={Terminal}
-          />
-        );
+        return <AIEndingScene />;
 
       case GAME_STAGES.RESULT:
-        return (
-          <GenericStageViewer
-            stageName="RESULT"
-            title="FINAL REALITY CHRONICLE"
-            description="View your World DNA hash, historical choices, and personalized ending dossier."
-            nextStageName={GAME_STAGES.REPLAY}
-            icon={Compass}
-          />
-        );
+        return <CinematicJourneyRecap />;
 
       case GAME_STAGES.REPLAY:
-        return (
-          <GenericStageViewer
-            stageName="REPLAY"
-            title="TIMELINE RESET AVAILABLE"
-            description="Forge a new reality with different parameters, archetypes, and moral vectors."
-            nextStageName={GAME_STAGES.LANDING}
-            icon={Sparkles}
-          />
-        );
+        return <CinematicJourneyRecap />;
 
       default:
         return <Landing />;

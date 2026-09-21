@@ -6,10 +6,49 @@
 
 export const AIService = {
   /**
+   * Synthesizes a unique AI World Title & Tagline during the Morph Phase
+   */
+  async generateWorldIdentity(state) {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const enableAI = import.meta.env.VITE_ENABLE_AI_SYNTHESIS === 'true';
+
+    if (enableAI && apiKey) {
+      try {
+        const prompt = `You are the Alterra World Synthesizer AI. Generate a unique cyberpunk/scifi world title and one-sentence tagline for:
+World: ${state.world?.name} (${state.world?.theme})
+Mood: ${state.mood}, Intensity: ${state.intensity}%, Chaos: ${state.chaos}%
+Return strictly valid JSON: { "title": string, "tagline": string }`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" }
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          return JSON.parse(text);
+        }
+      } catch (err) {
+        console.warn('[AIService] Remote identity synthesis failed, fallback activated:', err);
+      }
+    }
+
+    // Local deterministic fallback
+    return {
+      title: state.world?.aiTitleFallback || `${state.world?.name?.toUpperCase() || 'SIMULATION'}: FLUX STATE`,
+      tagline: state.world?.aiTaglineFallback || `Formed under ${state.mood} frequencies at ${state.chaos}% quantum entropy.`
+    };
+  },
+
+  /**
    * Generates a tailored AI ending based on player world DNA and decisions
    */
   async generateEnding(gameState) {
-    // Check if API key is provided in Vite env (without hardcoding)
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     const enableAI = import.meta.env.VITE_ENABLE_AI_SYNTHESIS === 'true';
 

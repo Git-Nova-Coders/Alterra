@@ -83,12 +83,30 @@ npm run build
 ```
 
 ---
+## 🎮 Phase 2 & 3 Implementation Completed
 
-## 🔜 Phase 2 Roadmap & Extension Points
+### 1. World Creation (M5 — M9)
+- **M5 World Selector (`WorldSelection.jsx`)**: Cyber (Neo-Kowloon 2099), Fantasy (Aethelgard Canopy), and Mystery (Orbital Station Tartarus) with full artifact and narrative presets.
+- **M6 & M7 World Director (`WorldDirector.jsx`)**: Real-time interactive controls for Mood (Serene, Mysterious, Dramatic, Cataclysmic), Environmental Intensity (10-100%), Quantum Chaos (0-100%), and Atmospheric Envelopes (Dawn, Noon, Twilight, Night, Storm). All controls visibly and immediately modify the viewport shaders and physics.
+- **M8 AI Morph Transition (`MorphTransition.jsx`)**: Cinematic compilation sequence executing:
+  1. `WORLD INITIALIZING...`
+  2. `ATMOSPHERE SYNCHRONIZING...`
+  3. `AI SIGNATURE GENERATED...`
+  4. `REALITY STABILIZED`
+- **M9 AI Visual Integration (`WorldCanvasVisual.jsx`)**: Custom SVG shader canvases for each world that dynamically respond to lighting, glitch spikes, particle density, and color grading without requiring remote network calls.
 
-Phase 2 will directly plug into the existing architecture:
-1. **Interactive Object Exploration (`GameScene.jsx`, `InteractiveObject.jsx`)**: Connects to `state.discoveredObjects` and `state.inventory`.
-2. **Entity Confrontation (`Encounter.jsx`)**: Consumes `state.role` and `state.mood`.
-3. **Artifact Sanctum & World Reaction (`Artifact.jsx`, `WorldReaction.jsx`)**: Visual engine reacts dynamically using `VisualService`.
-4. **Mini-Challenge (`MiniChallenge.jsx`)**: Reflex/puzzle mini-game updating `challengeScore`.
-5. **AI Ending Dossier (`Ending.jsx`, `WorldDNA.jsx`)**: Consumes `AIService.generateEnding(state)`.
+### 2. Game Foundation (M10 — M16)
+- **M10 Role Selection (`RoleSelection.jsx`)**: Explorer (reveals hidden objects/caches), Hacker (unlocks digital terminals), Guardian (protects fragile relics).
+- **M11 Trait Selection (`TraitSelection.jsx`)**: Brave (bold high-risk payoffs), Curious (extra sensory radar & clues), Cautious (damage/consequence mitigation).
+- **M12 & M13 Interactive Exploration & Objects (`GameScene.jsx`)**: 3-5 clickable hotspots per world mapped directly to the visual canvas, featuring role-dependent abilities and sequential puzzle unlocks (e.g., Terminal ➔ Encrypted Data Chip ➔ Nanosteel Locker ➔ Quantum Latch Key ➔ Quantum Core).
+- **M14 Inventory System (`HUD.jsx`, `GameScene.jsx`)**: Collectible keycards, relics, and tools with reactive cross-object unlocking and persistence in central game state.
+- **M15 & M16 First Encounter & Branching Consequences (`Encounter.jsx`, `Consequence.jsx`)**: Critical world encounters (Unit 734, Sylvan Chimera, Spatial Phantom) offering meaningful choices (**HELP / HIDE / TAKE**) that immediately alter world entropy, award unique inventory items, and shift environmental shaders.
+
+---
+
+## 🔜 Remaining Milestones (Phase 4)
+- **M17 Artifact Sanctum & Harmonization Decision** (Save / Control / Destroy)
+- **M18 World Reaction Engine** (dynamic biome shifts based on relic choice)
+- **M19 Mini-Challenge** (neural overclock timed node mini-game)
+- **M20 Final Decision** (Ascend / Stabilize / Diverge)
+- **M21 AI Ending Chronicle & World DNA Dossier** (complete epilogue synthesis)

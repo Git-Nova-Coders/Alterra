@@ -3,7 +3,7 @@
  * Validates state transitions and calculates game outcomes
  */
 
-import { GAME_STAGES, STAGE_FLOW_ORDER } from '../data/gameState';
+import { GAME_STAGES, STAGE_FLOW_ORDER } from '../data/gameState.js';
 
 export const GameEngine = {
   /**

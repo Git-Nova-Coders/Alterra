@@ -7,6 +7,11 @@ import Landing from './components/Landing';
 import WorldSelection from './components/WorldSelection';
 import WorldDirector from './components/WorldDirector';
 import MorphTransition from './components/MorphTransition';
+import RoleSelection from './components/RoleSelection';
+import TraitSelection from './components/TraitSelection';
+import GameScene from './components/GameScene';
+import Encounter from './components/Encounter';
+import Consequence from './components/Consequence';
 import GenericStageViewer from './components/GenericStageViewer';
 import { Shield, Sparkles, Compass, Terminal, Cpu, Flame, Target } from 'lucide-react';
 
@@ -36,74 +41,34 @@ export default function App() {
         return (
           <GenericStageViewer
             stageName="WORLD READY"
-            title="SIMULATION BOUNDARIES INITIALIZED"
-            description="The world environment has compiled. Prepare to select your character archetype and operational trait."
+            title="SIMULATION BOUNDARIES COMPILED"
+            description="The world environment has formed. Step forward to choose your operative archetype."
             nextStageName={GAME_STAGES.ROLE_SELECT}
             icon={Compass}
           />
         );
 
       case GAME_STAGES.ROLE_SELECT:
-        return (
-          <GenericStageViewer
-            stageName="ROLE SELECTION"
-            title="CONSCIOUSNESS AVATAR ALIGNMENT"
-            description="Foundation prepared for Phase 2: Infiltrator, Archivist, or Synthesizer role selection."
-            nextStageName={GAME_STAGES.TRAIT_SELECT}
-            icon={Shield}
-          />
-        );
+        return <RoleSelection />;
 
       case GAME_STAGES.TRAIT_SELECT:
-        return (
-          <GenericStageViewer
-            stageName="TRAIT SELECTION"
-            title="ATTUNE PRIMARY OPERATIONAL TRAIT"
-            description="Foundation prepared for Phase 2: Hyper-Vigilance, Resonant Attunement, or Overclocked Reflexes."
-            nextStageName={GAME_STAGES.EXPLORATION}
-            icon={Sparkles}
-          />
-        );
+        return <TraitSelection />;
 
       case GAME_STAGES.EXPLORATION:
-        return (
-          <GenericStageViewer
-            stageName="EXPLORATION"
-            title="SECTOR EXPLORATION & OBJECT DISCOVERY"
-            description="Phase 2 hook: Interactive objects, sensory clues, and dynamic environmental discovery."
-            nextStageName={GAME_STAGES.ENCOUNTER}
-            icon={Compass}
-          />
-        );
+        return <GameScene />;
 
       case GAME_STAGES.ENCOUNTER:
-        return (
-          <GenericStageViewer
-            stageName="ENCOUNTER"
-            title="CRITICAL ENTITY INTERACTION"
-            description="Phase 2 hook: Entity confrontation, dialogue branching, and world consequence engine."
-            nextStageName={GAME_STAGES.CONSEQUENCE}
-            icon={Flame}
-          />
-        );
+        return <Encounter />;
 
       case GAME_STAGES.CONSEQUENCE:
-        return (
-          <GenericStageViewer
-            stageName="CONSEQUENCE"
-            title="LOCAL REALITY PERTURBATION"
-            description="Consequence evaluation: The world alters state and unlocks the ancient artifact sanctum."
-            nextStageName={GAME_STAGES.ARTIFACT}
-            icon={Terminal}
-          />
-        );
+        return <Consequence />;
 
       case GAME_STAGES.ARTIFACT:
         return (
           <GenericStageViewer
             stageName="ARTIFACT DISCOVERY"
-            title="ANOMALOUS RELIC UNCOVERED"
-            description={`Sanctum breached. Found relic: ${state.world?.artifact || 'Keystone of Origin'}.`}
+            title="ANOMALOUS RELIC SANCTUM UNCOVERED"
+            description={`Sanctum breached. Primary Relic: ${state.world?.artifact || 'Keystone of Origin'}.`}
             nextStageName={GAME_STAGES.ARTIFACT_DECISION}
             icon={Cpu}
           />
@@ -114,7 +79,7 @@ export default function App() {
           <GenericStageViewer
             stageName="ARTIFACT DECISION"
             title="CHOOSE RELIC HARMONIZATION"
-            description="Make your decision: Preserve the anomaly, commune with its signal, or consume its energy."
+            description="Phase 4 hook: Make your decision: Preserve the anomaly, commune with its signal, or consume its energy."
             nextStageName={GAME_STAGES.WORLD_REACTION}
             icon={Target}
           />

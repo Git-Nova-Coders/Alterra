@@ -20,24 +20,27 @@ export default function ExplorationScene() {
         {
           id: 'ancient_runestone',
           title: 'Petrified Runestone',
+          emoji: '🗿',
           desc: 'Mossy carvings pulsating with dormant bio-arcana.',
           clue: 'Glyphs deciphered: "The forest breathes only when unchained."',
           icon: Sparkles,
           color: 'text-emerald-400',
-          item: { id: 'sylvan_dew', name: 'Sylvan Dew Flask' }
+          item: { id: 'sylvan_dew', name: 'Sylvan Dew Flask', emoji: '🧪' }
         },
         {
           id: 'root_terminal',
           title: 'Arboreal Spore Node',
+          emoji: '🍄',
           desc: 'A cluster of luminescent fungi vibrating in low frequencies.',
           clue: 'Vibrations align with the Sanctum of the Sylvan Root.',
           icon: Terminal,
           color: 'text-teal-400',
-          item: { id: 'spore_crystal', name: 'Resonating Spore' }
+          item: { id: 'spore_crystal', name: 'Resonating Spore', emoji: '🔮' }
         },
         {
           id: 'sealed_canopy_door',
           title: 'Elder Vine Barrier',
+          emoji: '🌿',
           desc: 'Dense briars blocking entry to the deepest grove.',
           clue: 'Requires pure elemental harmonic attunement to part.',
           icon: Shield,
@@ -50,24 +53,27 @@ export default function ExplorationScene() {
         {
           id: 'flight_recorder',
           title: 'Derelict Log Terminal',
+          emoji: '📟',
           desc: 'Flickering CRT readout from the abandoned flight bridge.',
           clue: 'Audio log 88-Delta: "The Signal Key altered our navigation trajectory."',
           icon: Terminal,
           color: 'text-purple-400',
-          item: { id: 'data_chip', name: 'Flight Deck Data Chip' }
+          item: { id: 'data_chip', name: 'Flight Deck Data Chip', emoji: '💾' }
         },
         {
           id: 'cryo_pod',
           title: 'Decompressed Cryo-Chamber',
+          emoji: '🧊',
           desc: 'A pressurized vault with frosted hull plating.',
           clue: 'Gravimetric readings fluctuate around the emergency hatch.',
           icon: Shield,
           color: 'text-blue-400',
-          item: { id: 'plasma_torch', name: 'Compact Plasma Torch' }
+          item: { id: 'plasma_torch', name: 'Compact Plasma Torch', emoji: '🔦' }
         },
         {
           id: 'airlock_relay',
           title: 'Sector 4 Blast Gateway',
+          emoji: '🚪',
           desc: 'Heavy tungsten security door sealed during vacuum breach.',
           clue: 'Security overrides await manual relic harmonization.',
           icon: Key,
@@ -81,24 +87,27 @@ export default function ExplorationScene() {
       {
         id: 'data_terminal',
         title: 'Overclocked Holo-Terminal',
+        emoji: '💻',
         desc: 'Streaming encrypted data streams from Kowloon central hub.',
         clue: 'Decryption: "The Quantum Core draws power directly from the grid."',
         icon: Terminal,
         color: 'text-cyan-400',
-        item: { id: 'data_chip', name: 'Encrypted Data Chip' }
+        item: { id: 'data_chip', name: 'Encrypted Data Chip', emoji: '💾' }
       },
       {
         id: 'security_cache',
         title: 'Corpo Security Stash',
+        emoji: '🧰',
         desc: 'A reinforced lockbox abandoned by cybernetic enforcers.',
         clue: 'Contains security credentials for sub-level zero.',
         icon: Key,
         color: 'text-amber-400',
-        item: { id: 'passcode_drive', name: 'Bypass Keycard' }
+        item: { id: 'passcode_drive', name: 'Bypass Keycard', emoji: '💳' }
       },
       {
         id: 'subgrid_door',
         title: 'Sub-Level Firewall Gate',
+        emoji: '🚪',
         desc: 'A massive biometric gate sealing the quantum reactor core.',
         clue: 'Requires core authorization or brute computational force.',
         icon: Shield,
@@ -182,7 +191,8 @@ export default function ExplorationScene() {
                 }`}
               >
                 <div className="flex items-center space-x-2 mb-2">
-                  <Icon className={`w-5 h-5 ${obj.color}`} />
+                  <span className="text-2xl">{obj.emoji}</span>
+                  <Icon className={`w-4 h-4 ${obj.color}`} />
                   <span className="font-cyber font-bold text-sm text-white">{obj.title}</span>
                 </div>
                 <p className="text-xs text-slate-300 mb-3">{obj.desc}</p>

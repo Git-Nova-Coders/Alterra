@@ -18,46 +18,49 @@ export default function ArtifactDecision() {
     {
       id: 'save',
       label: 'SAVE',
+      emoji: '🛡️',
       tagline: 'Preserve & Harmonize',
       icon: ShieldCheck,
       color: 'emerald',
       borderColor: 'border-emerald-400',
       glow: 'shadow-[0_0_30px_rgba(16,185,129,0.35)]',
       effects: [
-        'Stabilizes regional environmental matrix',
-        'Amplifies ambient lighting & clarity',
-        'Calms chaotic particles to serene float',
-        'Protects the simulation against catastrophic collapse'
+        '✨ Stabilizes regional environment',
+        '💡 Amplifies ambient illumination',
+        '🌿 Calms chaotic floating particles',
+        '🛡️ Protects world against collapse'
       ]
     },
     {
       id: 'control',
       label: 'CONTROL',
+      emoji: '⚡',
       tagline: 'Subjugate & Overclock',
       icon: Cpu,
       color: 'purple',
       borderColor: 'border-purple-400',
       glow: 'shadow-[0_0_30px_rgba(168,85,247,0.35)]',
       effects: [
-        'Injects synthetic overclock protocols',
-        'Triggers visual glitch shaders & chromatic distortion',
-        'Forces kinetic objects into erratic oscillations',
-        'Flashes emergency alert telemetry warnings'
+        '⚡ Overclocks simulation compute',
+        '🔮 Triggers chromatic glitch shaders',
+        '🌀 Forces kinetic object oscillation',
+        '⚠️ Flashes grid alert warnings'
       ]
     },
     {
       id: 'destroy',
       label: 'DESTROY',
+      emoji: '💥',
       tagline: 'Shatter & Unshackle',
       icon: Flame,
       color: 'crimson',
       borderColor: 'border-rose-500',
       glow: 'shadow-[0_0_30px_rgba(244,63,94,0.4)]',
       effects: [
-        'Fractures reality grid with visceral seismic tremors',
-        'Violent screen shake & falling fire embers',
-        'Initiates structural matrix collapse',
-        'Blows open an emergency breach exit'
+        '💥 Fractures reality with seismic tremors',
+        '🔥 Violent screen shake & falling embers',
+        '🌋 Collapses structural matrix',
+        '🚪 Blows open emergency breach exit'
       ]
     }
   ];
@@ -123,8 +126,9 @@ export default function ArtifactDecision() {
                   )}
                 </div>
 
-                <h2 className="text-2xl font-cyber font-black text-white tracking-wide mb-1">
-                  [{d.label}]
+                <h2 className="text-2xl font-cyber font-black text-white tracking-wide mb-1 flex items-center space-x-2">
+                  <span>{d.emoji}</span>
+                  <span>[{d.label}]</span>
                 </h2>
                 <p className="text-xs font-mono text-cyan-400 mb-4">{d.tagline}</p>
 

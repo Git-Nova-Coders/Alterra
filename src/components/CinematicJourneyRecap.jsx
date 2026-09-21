@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGameState, GAME_ACTIONS } from '../context/GameStateContext';
+import { useGameState } from '../context/GameStateContext';
 import { GAME_STAGES } from '../data/gameState';
 import { AudioService } from '../services/audioService';
 import { DecisionEngine } from '../utils/decisionEngine';
@@ -19,9 +19,7 @@ import {
   HeartHandshake,
   EyeOff,
   Grab,
-  Radio,
-  Layers,
-  ChevronRight
+  Radio
 } from 'lucide-react';
 
 export default function CinematicJourneyRecap() {
@@ -35,34 +33,41 @@ export default function CinematicJourneyRecap() {
   const world = state.world || {
     id: 'cyber',
     name: 'Neo-Kowloon 2099',
-    theme: 'digital',
+    iconEmoji: '🏙️',
+    artifactEmoji: '🧊',
     artifact: 'Quantum Core',
     previewVisual: 'linear-gradient(135deg, #091a28 0%, #032b44 50%, #081220 100%)'
   };
 
-  const roleCode = state.role?.codeName || (state.role?.id === 'archivist' ? 'EXPLORER' : state.role?.id === 'synthesizer' ? 'GUARDIAN' : 'HACKER');
-  const traitCode = state.trait?.codeName || (state.trait?.id === 'daring' ? 'BRAVE' : state.trait?.id === 'harmonic' ? 'CAUTIOUS' : 'CURIOUS');
+  const worldEmoji = world.iconEmoji || (world.id === 'fantasy' ? '🌲' : world.id === 'mystery' ? '🛰️' : '🏙️');
+  const artifactEmoji = world.artifactEmoji || (world.id === 'fantasy' ? '💚' : world.id === 'mystery' ? '🗝️' : '🧊');
 
-  const encounterChoice = (state.encounterChoice || 'help').toUpperCase(); // HELP | HIDE | TAKE
+  const roleCode = state.role?.codeName || (state.role?.id === 'archivist' ? 'EXPLORER' : state.role?.id === 'synthesizer' ? 'GUARDIAN' : 'HACKER');
+  const roleEmoji = state.role?.emoji || (roleCode === 'EXPLORER' ? '🧭' : roleCode === 'GUARDIAN' ? '🛡️' : '⚡');
+
+  const traitCode = state.trait?.codeName || (state.trait?.id === 'daring' ? 'BRAVE' : state.trait?.id === 'harmonic' ? 'CAUTIOUS' : 'CURIOUS');
+  const traitEmoji = state.trait?.emoji || (traitCode === 'BRAVE' ? '⚔️' : traitCode === 'CAUTIOUS' ? '🌿' : '🔮');
+
+  const rawEncounter = (state.encounterChoice || 'help').toLowerCase();
+  const encounterChoice = rawEncounter === 'evade' ? 'HIDE' : rawEncounter.toUpperCase(); // HELP | HIDE | TAKE
+  const encounterEmoji = encounterChoice === 'HELP' ? '🤝' : encounterChoice === 'HIDE' ? '👤' : '💎';
+
   const artifactName = world.artifact || 'Quantum Core';
   const artifactDecision = (state.artifactDecision || 'save').toUpperCase(); // SAVE | CONTROL | DESTROY
+  const decisionEmoji = artifactDecision === 'SAVE' ? '🛡️' : artifactDecision === 'CONTROL' ? '⚡' : '💥';
+
   const challengeResult = state.challengeResult || 'success';
-  const challengeScore = state.challengeScore || (challengeResult === 'success' ? 92 : 45);
+  const challengeScore = state.challengeScore || (challengeResult === 'success' ? 95 : 35);
+  const challengeEmoji = challengeResult === 'success' ? '🎯' : '⚠️';
+
   const finalDecision = (state.finalDecision || 'stay').toUpperCase(); // ESCAPE | STAY
+  const finalEmoji = finalDecision === 'ESCAPE' ? '🚀' : '🏰';
 
   // Derived World DNA and analysis
   const dna = DecisionEngine.generateWorldDNA(state);
   const outcome = DecisionEngine.evaluateOutcome(state);
 
-  // Scene timing configuration in milliseconds (targeting ~16-18s total)
-  // Scene 1: 2200ms
-  // Scene 2: 2000ms
-  // Scene 3: 2000ms
-  // Scene 4: 2000ms
-  // Scene 5: 3500ms
-  // Scene 6: 1800ms
-  // Scene 7: 2200ms
-  // Scene 8: Final reality view (stays active)
+  // Timing configuration in milliseconds (~16-18s total)
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -117,14 +122,14 @@ export default function CinematicJourneyRecap() {
 
   return (
     <div className="relative min-h-[85vh] flex flex-col justify-between max-w-6xl mx-auto px-4 py-6">
-      {/* Top Cinematic Bar & Timeline Indicator */}
+      {/* Top Bar with Emoji Scene Stepper */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div className="flex items-center space-x-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+          <span className="text-xl animate-pulse">🎬</span>
           <span className="font-cyber text-xs tracking-widest text-cyan-300 font-bold uppercase">
-            CINEMATIC REALITY SYNTHESIS
+            VISUAL REALITY RECAP
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-400">
             SCENE {currentScene} / 8
           </span>
         </div>
@@ -133,31 +138,48 @@ export default function CinematicJourneyRecap() {
           {currentScene < 8 && (
             <button
               onClick={handleSkipToFinal}
-              className="text-xs font-mono text-slate-400 hover:text-cyan-300 px-2 py-1 rounded bg-slate-900/60 border border-slate-800 transition-colors"
+              className="text-xs font-mono text-slate-400 hover:text-cyan-300 px-3 py-1 rounded bg-slate-900/80 border border-slate-700 transition-colors flex items-center space-x-1"
             >
-              Skip to Reality DNA →
+              <span>Fast-Forward</span>
+              <span>⏩</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Progress Bars */}
-      <div className="grid grid-cols-8 gap-1.5 mb-6">
-        {Array.from({ length: 8 }).map((_, idx) => (
+      {/* Visual Step Timeline */}
+      <div className="flex items-center justify-between gap-1 mb-6 px-1">
+        {[
+          { num: 1, icon: worldEmoji },
+          { num: 2, icon: encounterEmoji },
+          { num: 3, icon: artifactEmoji },
+          { num: 4, icon: decisionEmoji },
+          { num: 5, icon: artifactDecision === 'SAVE' ? '✨' : artifactDecision === 'CONTROL' ? '⚡' : '💥' },
+          { num: 6, icon: challengeEmoji },
+          { num: 7, icon: finalEmoji },
+          { num: 8, icon: '👑' }
+        ].map((step) => (
           <div
-            key={idx}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              idx + 1 === currentScene
-                ? 'bg-cyan-400 shadow-glow-cyan'
-                : idx + 1 < currentScene
-                ? 'bg-cyan-900/80'
-                : 'bg-slate-900'
+            key={step.num}
+            className={`flex-1 flex flex-col items-center gap-1 transition-all ${
+              step.num === currentScene ? 'scale-110' : 'opacity-60'
             }`}
-          />
+          >
+            <div
+              className={`h-1.5 w-full rounded-full transition-all ${
+                step.num === currentScene
+                  ? 'bg-cyan-400 shadow-glow-cyan'
+                  : step.num < currentScene
+                  ? 'bg-cyan-800'
+                  : 'bg-slate-900'
+              }`}
+            />
+            <span className="text-xs sm:text-base">{step.icon}</span>
+          </div>
         ))}
       </div>
 
-      {/* Cinematic Viewport (The Video-Like Window) */}
+      {/* Cinematic Viewport */}
       <div className="relative flex-1 min-h-[440px] sm:min-h-[500px] cyber-panel rounded-3xl border-2 border-cyan-500/30 overflow-hidden flex items-center justify-center p-6 sm:p-12 shadow-2xl">
         <AnimatePresence mode="wait">
           {/* ========================================================
@@ -166,13 +188,13 @@ export default function CinematicJourneyRecap() {
           {currentScene === 1 && (
             <motion.div
               key="scene1"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.8, ease: 'easeInOut' }}
+              exit={{ opacity: 0, scale: 1.1 }}
+              transition={{ duration: 0.8 }}
               className="absolute inset-0 flex flex-col items-center justify-center text-center p-6"
             >
-              {/* Camera zoom effect on background visual */}
+              {/* Background with subtle zoom */}
               <motion.div
                 initial={{ scale: 1 }}
                 animate={{ scale: 1.15 }}
@@ -180,30 +202,34 @@ export default function CinematicJourneyRecap() {
                 className="absolute inset-0 opacity-40"
                 style={{ background: world.previewVisual }}
               />
-              <div className="absolute inset-0 bg-black/50" />
+              <div className="absolute inset-0 bg-black/40" />
 
               <div className="relative z-10 space-y-4 max-w-xl">
-                <span className="text-[11px] font-mono tracking-widest uppercase text-cyan-400 bg-cyan-950/80 px-3.5 py-1 rounded-full border border-cyan-500/40">
-                  SCENE 1 // THE GENESIS WORLD
-                </span>
+                {/* Hero Emoji Avatar */}
+                <motion.div
+                  initial={{ y: -20, scale: 0.8 }}
+                  animate={{ y: 0, scale: 1 }}
+                  className="text-6xl sm:text-8xl filter drop-shadow-[0_0_25px_rgba(0,240,255,0.4)] mb-2"
+                >
+                  {worldEmoji}
+                </motion.div>
 
-                <h1 className="text-4xl sm:text-6xl font-cyber font-black tracking-wider text-white uppercase drop-shadow-[0_0_30px_rgba(0,240,255,0.4)]">
+                <h1 className="text-3xl sm:text-5xl font-cyber font-black tracking-wider text-white uppercase drop-shadow-[0_0_30px_rgba(0,240,255,0.4)]">
                   {world.name}
                 </h1>
 
-                <div className="flex items-center justify-center space-x-3 text-xs sm:text-sm font-mono text-cyan-300">
-                  <span className="px-2.5 py-1 rounded bg-slate-900/90 border border-slate-700">
-                    ROLE: <strong>{roleCode}</strong>
+                {/* Visual Role & Trait Badges with Emojis */}
+                <div className="flex items-center justify-center gap-3 pt-2">
+                  <span className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-slate-900/90 border border-cyan-500/40 text-cyan-300 font-mono text-sm shadow-sm">
+                    <span className="text-base">{roleEmoji}</span>
+                    <span className="font-bold">{roleCode}</span>
                   </span>
-                  <span className="text-slate-500">•</span>
-                  <span className="px-2.5 py-1 rounded bg-slate-900/90 border border-slate-700">
-                    TRAIT: <strong>{traitCode}</strong>
+                  <span className="text-slate-500">➕</span>
+                  <span className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-slate-900/90 border border-purple-500/40 text-purple-300 font-mono text-sm shadow-sm">
+                    <span className="text-base">{traitEmoji}</span>
+                    <span className="font-bold">{traitCode}</span>
                   </span>
                 </div>
-
-                <p className="text-xs sm:text-sm text-slate-300 font-sans max-w-md mx-auto">
-                  A unique simulated reality spawned under {state.mood.toUpperCase()} emotional shaders with {state.chaos}% quantum entropy.
-                </p>
               </div>
             </motion.div>
           )}
@@ -214,40 +240,32 @@ export default function CinematicJourneyRecap() {
           {currentScene === 2 && (
             <motion.div
               key="scene2"
-              initial={{ opacity: 0, x: 40 }}
+              initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
+              exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.6 }}
               className="absolute inset-0 flex flex-col items-center justify-center text-center p-6"
             >
-              <div
-                className="absolute inset-0 opacity-30"
-                style={{ background: world.previewVisual }}
-              />
+              <div className="absolute inset-0 opacity-30" style={{ background: world.previewVisual }} />
               <div className="absolute inset-0 bg-black/60" />
 
-              <div className="relative z-10 space-y-5 max-w-lg">
+              <div className="relative z-10 space-y-4 max-w-lg">
                 <span className="text-[11px] font-mono tracking-widest uppercase text-amber-400 bg-amber-950/80 px-3.5 py-1 rounded-full border border-amber-500/40">
-                  SCENE 2 // CRITICAL INTERACTION
+                  CRITICAL CHOICE
                 </span>
 
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-widest">
-                  Faced with the crisis of an entrapped entity:
-                </p>
+                <div className="text-7xl sm:text-8xl animate-bounce filter drop-shadow-[0_0_30px_rgba(245,158,11,0.5)]">
+                  {encounterEmoji}
+                </div>
 
-                <div className="inline-flex items-center space-x-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-2 border-amber-400/80 shadow-[0_0_35px_rgba(245,158,11,0.3)]">
-                  {encounterChoice === 'HELP' && <HeartHandshake className="w-8 h-8 text-emerald-400" />}
-                  {encounterChoice === 'HIDE' || encounterChoice === 'EVADE' ? <EyeOff className="w-8 h-8 text-cyan-400" /> : null}
-                  {encounterChoice === 'TAKE' && <Grab className="w-8 h-8 text-amber-400" />}
-                  <span className="text-3xl sm:text-4xl font-cyber font-black text-white tracking-wider">
-                    [{encounterChoice === 'EVADE' ? 'HIDE' : encounterChoice}]
-                  </span>
+                <div className="inline-block px-8 py-3 rounded-2xl bg-slate-900/90 border-2 border-amber-400 text-3xl sm:text-5xl font-cyber font-black text-white shadow-[0_0_35px_rgba(245,158,11,0.3)]">
+                  [{encounterChoice}]
                 </div>
 
                 <p className="text-sm font-sans text-cyan-200">
-                  {encounterChoice === 'HELP' && 'You chose empathy. Trust forged an unbreakable bond, uncovering the sanctum secret threshold.'}
-                  {(encounterChoice === 'HIDE' || encounterChoice === 'EVADE') && 'You chose stealth. Slipping into shadows, you safeguarded your own passage.'}
-                  {encounterChoice === 'TAKE' && 'You chose opportunism. Seizing raw power, you altered environmental stability.'}
+                  {encounterChoice === 'HELP' && 'Empathy & Trust forged. Sanctum path unlocked! 🔓'}
+                  {encounterChoice === 'HIDE' && 'Stealth & Veil prioritized. Undetected passage secured! 🕶️'}
+                  {encounterChoice === 'TAKE' && 'Raw Power harvested. Local matrix entropy heightened! ⚡'}
                 </p>
               </div>
             </motion.div>
@@ -259,7 +277,7 @@ export default function CinematicJourneyRecap() {
           {currentScene === 3 && (
             <motion.div
               key="scene3"
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.2 }}
               transition={{ duration: 0.7 }}
@@ -267,31 +285,28 @@ export default function CinematicJourneyRecap() {
             >
               <div className="absolute inset-0 bg-radial-gradient from-cyan-900/40 via-black to-black" />
 
-              <div className="relative z-10 space-y-6 max-w-lg">
+              <div className="relative z-10 space-y-4 max-w-lg">
                 <span className="text-[11px] font-mono tracking-widest uppercase text-cyan-400 bg-cyan-950/80 px-3.5 py-1 rounded-full border border-cyan-500/40">
-                  SCENE 3 // THE AWAKENED RELIC
+                  THE AWAKENED RELIC
                 </span>
 
-                {/* Animated Core Icon */}
-                <div className="relative flex items-center justify-center mx-auto w-32 h-32">
-                  <div className="absolute inset-0 rounded-full bg-cyan-400/25 blur-3xl animate-ping" />
-                  <div className="w-24 h-24 rounded-2xl border-2 border-cyan-400 bg-cyan-950/80 shadow-glow-cyan flex items-center justify-center transform rotate-45 animate-spin" style={{ animationDuration: '12s' }}>
-                    {world.id === 'fantasy' ? (
-                      <Sparkles className="w-10 h-10 text-emerald-300 transform -rotate-45" />
-                    ) : world.id === 'mystery' ? (
-                      <Key className="w-10 h-10 text-purple-300 transform -rotate-45" />
-                    ) : (
-                      <Cpu className="w-10 h-10 text-cyan-200 transform -rotate-45" />
-                    )}
-                  </div>
-                </div>
+                {/* Big Animated Artifact Emoji */}
+                <motion.div
+                  animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="text-7xl sm:text-9xl filter drop-shadow-[0_0_40px_rgba(0,240,255,0.6)] my-2"
+                >
+                  {artifactEmoji}
+                </motion.div>
 
                 <h2 className="text-3xl sm:text-5xl font-cyber font-black tracking-wider text-white uppercase drop-shadow-[0_0_30px_rgba(0,240,255,0.5)]">
                   {artifactName}
                 </h2>
 
-                <p className="text-xs font-mono text-cyan-300 tracking-widest uppercase">
-                  Ancient Resonance Fully Synchronized
+                <p className="text-xs font-mono text-cyan-300 tracking-widest uppercase flex items-center justify-center gap-1.5">
+                  <span>✨</span>
+                  <span>Harmonic Resonance Online</span>
+                  <span>✨</span>
                 </p>
               </div>
             </motion.div>
@@ -313,29 +328,29 @@ export default function CinematicJourneyRecap() {
 
               <div className="relative z-10 space-y-4 max-w-lg">
                 <span className="text-[11px] font-mono tracking-widest uppercase text-slate-400 bg-slate-900/80 px-3.5 py-1 rounded-full border border-slate-700">
-                  SCENE 4 // THE DEFINITIVE VECTOR
+                  YOUR VERDICT
                 </span>
 
-                <p className="text-xs font-mono text-slate-400 uppercase tracking-widest">
-                  At the convergence of the artifact, you chose:
-                </p>
+                <div className="text-7xl sm:text-8xl my-1 animate-pulse">
+                  {decisionEmoji}
+                </div>
 
                 <div
-                  className={`inline-block px-10 py-5 rounded-2xl border-2 text-4xl sm:text-5xl font-cyber font-black tracking-widest uppercase shadow-2xl ${
+                  className={`inline-block px-10 py-4 rounded-2xl border-2 text-4xl sm:text-5xl font-cyber font-black tracking-widest uppercase shadow-2xl ${
                     artifactDecision === 'SAVE'
-                      ? 'border-emerald-400 bg-emerald-950/70 text-emerald-300 shadow-[0_0_45px_rgba(16,185,129,0.5)]'
+                      ? 'border-emerald-400 bg-emerald-950/80 text-emerald-300 shadow-[0_0_45px_rgba(16,185,129,0.5)]'
                       : artifactDecision === 'CONTROL'
-                      ? 'border-purple-400 bg-purple-950/70 text-purple-300 shadow-[0_0_45px_rgba(168,85,247,0.5)]'
-                      : 'border-rose-500 bg-rose-950/70 text-rose-300 shadow-[0_0_45px_rgba(244,63,94,0.5)]'
+                      ? 'border-purple-400 bg-purple-950/80 text-purple-300 shadow-[0_0_45px_rgba(168,85,247,0.5)]'
+                      : 'border-rose-500 bg-rose-950/80 text-rose-300 shadow-[0_0_45px_rgba(244,63,94,0.5)]'
                   }`}
                 >
                   [{artifactDecision}]
                 </div>
 
                 <p className="text-sm font-sans text-slate-200">
-                  {artifactDecision === 'SAVE' && 'Order, preservation, and stabilization decreed across reality.'}
-                  {artifactDecision === 'CONTROL' && 'Overclocked dominance and kinetic submission forced upon the matrix.'}
-                  {artifactDecision === 'DESTROY' && 'Shattered physical bonds, liberating pure raw entropy into the skybox.'}
+                  {artifactDecision === 'SAVE' && '🛡️ Protection, crystal balance, and equilibrium restored.'}
+                  {artifactDecision === 'CONTROL' && '⚡ Kinetic subjugation and overclocking enforced.'}
+                  {artifactDecision === 'DESTROY' && '💥 Bonds shattered, liberating pure entropy.'}
                 </p>
               </div>
             </motion.div>
@@ -353,7 +368,7 @@ export default function CinematicJourneyRecap() {
               transition={{ duration: 0.8 }}
               className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 overflow-hidden"
             >
-              {/* SAVE TRANSFORMATION: Brilliant radiant emerald aura, floating particles, absolute calm */}
+              {/* SAVE: Calm floating sparkles and green aura */}
               {artifactDecision === 'SAVE' && (
                 <>
                   <motion.div
@@ -362,43 +377,45 @@ export default function CinematicJourneyRecap() {
                     className="absolute inset-0 bg-gradient-to-t from-emerald-900/30 via-emerald-500/20 to-transparent"
                   />
                   <div className="absolute inset-0">
-                    {Array.from({ length: 20 }).map((_, i) => (
+                    {Array.from({ length: 24 }).map((_, i) => (
                       <motion.div
                         key={i}
                         initial={{ y: '100%', opacity: 0 }}
                         animate={{ y: '-10%', opacity: [0, 1, 0] }}
-                        transition={{ duration: 4, repeat: Infinity, delay: i * 0.2 }}
-                        className="absolute w-2 h-2 rounded-full bg-emerald-300 blur-[0.5px]"
-                        style={{ left: `${(i * 5) % 100}%` }}
-                      />
+                        transition={{ duration: 4, repeat: Infinity, delay: i * 0.15 }}
+                        className="absolute text-xl"
+                        style={{ left: `${(i * 4.3) % 100}%` }}
+                      >
+                        {i % 2 === 0 ? '✨' : '🌿'}
+                      </motion.div>
                     ))}
                   </div>
                 </>
               )}
 
-              {/* CONTROL TRANSFORMATION: Glitch RGB split, oscillating nodes, warning strobes */}
+              {/* CONTROL: Electric shocks and flux glitch nodes */}
               {artifactDecision === 'CONTROL' && (
                 <>
                   <div className="absolute inset-0 bg-purple-950/40 mix-blend-color-dodge animate-pulse" />
                   <div className="absolute inset-0 scanline opacity-90" />
-                  {Array.from({ length: 8 }).map((_, i) => (
+                  {Array.from({ length: 12 }).map((_, i) => (
                     <motion.div
                       key={i}
                       animate={{
-                        x: [0, (i % 2 === 0 ? 40 : -40), 0],
-                        y: [0, -30, 0]
+                        x: [0, (i % 2 === 0 ? 50 : -50), 0],
+                        y: [0, -35, 0]
                       }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      className="absolute w-8 h-8 rounded border border-purple-400 bg-purple-900/60 flex items-center justify-center font-mono text-[9px] text-purple-200"
-                      style={{ top: `${(i * 12) + 10}%`, left: `${(i * 14) + 5}%` }}
+                      transition={{ duration: 1.2, repeat: Infinity }}
+                      className="absolute text-2xl"
+                      style={{ top: `${(i * 8) + 8}%`, left: `${(i * 12) + 6}%` }}
                     >
-                      FLUX
+                      {i % 2 === 0 ? '⚡' : '⚠️'}
                     </motion.div>
                   ))}
                 </>
               )}
 
-              {/* DESTROY TRANSFORMATION: Visceral screen shake, cracks, falling embers */}
+              {/* DESTROY: Screen tremor, cracks, and fiery explosion embers */}
               {artifactDecision === 'DESTROY' && (
                 <>
                   <motion.div
@@ -406,40 +423,46 @@ export default function CinematicJourneyRecap() {
                     transition={{ duration: 0.2, repeat: Infinity }}
                     className="absolute inset-0 bg-rose-950/40"
                   />
-                  {/* Procedural cracks */}
                   <div className="absolute top-1/4 left-10 right-10 h-[2px] bg-rose-500 shadow-[0_0_20px_#f43f5e] transform -rotate-6" />
                   <div className="absolute top-2/3 left-20 right-20 h-[2px] bg-amber-400 shadow-[0_0_20px_#f59e0b] transform rotate-12" />
-                  {/* Falling embers */}
                   <div className="absolute inset-0">
                     {Array.from({ length: 24 }).map((_, i) => (
                       <motion.div
                         key={i}
                         initial={{ y: '-10%', opacity: 0 }}
                         animate={{ y: '110%', opacity: [0, 1, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.12 }}
-                        className="absolute w-2 h-2 rounded-full bg-gradient-to-b from-amber-400 to-rose-600"
+                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.1 }}
+                        className="absolute text-xl"
                         style={{ left: `${(i * 4.2) % 100}%` }}
-                      />
+                      >
+                        {i % 2 === 0 ? '🔥' : '💥'}
+                      </motion.div>
                     ))}
                   </div>
                 </>
               )}
 
-              <div className="relative z-10 space-y-4 max-w-xl bg-black/60 p-8 rounded-2xl border border-slate-800">
+              <div className="relative z-10 space-y-3 max-w-xl bg-black/70 p-6 sm:p-8 rounded-3xl border border-slate-700">
                 <span className="text-[11px] font-mono tracking-widest uppercase text-cyan-400">
-                  SCENE 5 // VISUAL WORLD TRANSFORMATION
+                  LIVE WORLD TRANSFORMATION
                 </span>
 
-                <h2 className="text-3xl sm:text-5xl font-cyber font-black text-white uppercase tracking-wider">
-                  {artifactDecision === 'SAVE' && 'THE STABILIZED REALITY'}
-                  {artifactDecision === 'CONTROL' && 'THE OVERCLOCKED DOMAIN'}
-                  {artifactDecision === 'DESTROY' && 'THE COLLAPSING HORIZON'}
+                <div className="text-6xl sm:text-7xl">
+                  {artifactDecision === 'SAVE' && '🌿✨💎'}
+                  {artifactDecision === 'CONTROL' && '⚡⚠️🔮'}
+                  {artifactDecision === 'DESTROY' && '🔥💥🚪'}
+                </div>
+
+                <h2 className="text-2xl sm:text-4xl font-cyber font-black text-white uppercase tracking-wider">
+                  {artifactDecision === 'SAVE' && 'THE STABILIZED BIOME'}
+                  {artifactDecision === 'CONTROL' && 'THE OVERCLOCKED GRID'}
+                  {artifactDecision === 'DESTROY' && 'THE COLLAPSING REALITY'}
                 </h2>
 
-                <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
-                  {artifactDecision === 'SAVE' && 'The ecosystem stabilized into crystalline order. Ambient light intensified as calm harmonic particles cleansed the atmosphere.'}
-                  {artifactDecision === 'CONTROL' && 'Data pulses and chromatic glitches surge through the landscape. Kinetic structures warp to obey your overclocked sovereignty.'}
-                  {artifactDecision === 'DESTROY' && 'Seismic ruptures split the world open. Geometry unraveled in fire and falling embers, blowing open an emergency breach portal!'}
+                <p className="text-xs sm:text-sm text-slate-200 font-sans">
+                  {artifactDecision === 'SAVE' && 'Crystalline harmony cascades through the atmosphere.'}
+                  {artifactDecision === 'CONTROL' && 'High-voltage distortion forces structures under your dominion.'}
+                  {artifactDecision === 'DESTROY' && 'Seismic ruptures blast open an emergency breach escape route!'}
                 </p>
               </div>
             </motion.div>
@@ -461,22 +484,20 @@ export default function CinematicJourneyRecap() {
 
               <div className="relative z-10 space-y-4 max-w-md">
                 <span className="text-[11px] font-mono tracking-widest uppercase text-cyan-400 bg-cyan-950/80 px-3.5 py-1 rounded-full border border-cyan-500/40">
-                  SCENE 6 // NEURAL OVERCLOCK EVALUATION
+                  MINI-CHALLENGE
                 </span>
 
-                <h3 className="text-2xl sm:text-3xl font-cyber font-bold text-white uppercase">
-                  CHALLENGE {challengeResult === 'success' ? 'STABILIZED' : 'OVERLOADED'}
-                </h3>
-
-                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full border-4 border-cyan-400 bg-slate-900 shadow-glow-cyan text-3xl font-cyber font-black text-white">
-                  {challengeScore}%
+                <div className="text-6xl sm:text-7xl animate-pulse">
+                  {challengeEmoji}
                 </div>
 
-                <p className="text-xs font-mono text-cyan-300">
-                  {challengeResult === 'success'
-                    ? '✔ Resonance 100% synchronized — maximum outcome clarity unlocked.'
-                    : '⚠ Dimensional turbulence recorded — unpredictable flux vector applied.'}
-                </p>
+                <h3 className="text-2xl sm:text-3xl font-cyber font-bold text-white uppercase">
+                  {challengeResult === 'success' ? 'HARMONIZATION SUCCESS' : 'OVERLOAD FLUX'}
+                </h3>
+
+                <div className="inline-flex items-center justify-center px-6 py-2 rounded-2xl border-2 border-cyan-400 bg-slate-900 shadow-glow-cyan text-3xl sm:text-4xl font-cyber font-black text-cyan-300">
+                  {challengeScore}%
+                </div>
               </div>
             </motion.div>
           )}
@@ -497,129 +518,145 @@ export default function CinematicJourneyRecap() {
 
               <div className="relative z-10 space-y-5 max-w-lg">
                 <span className="text-[11px] font-mono tracking-widest uppercase text-purple-400 bg-purple-950/80 px-3.5 py-1 rounded-full border border-purple-500/40">
-                  SCENE 7 // GATEWAY CONVERGENCE
+                  THE FINAL GATEWAY
                 </span>
 
-                <h2 className="text-2xl sm:text-3xl font-cyber font-black text-white uppercase">
-                  THE GATEWAY OPENS
-                </h2>
+                <div className="text-7xl sm:text-8xl">
+                  {finalEmoji}
+                </div>
 
-                <div className="flex items-center justify-center space-x-6">
+                <div className="flex items-center justify-center space-x-4">
                   <div
-                    className={`px-6 py-4 rounded-xl border-2 font-cyber font-black text-xl transition-all ${
+                    className={`px-5 py-3 rounded-2xl border-2 font-cyber font-black text-xl flex items-center space-x-2 ${
                       finalDecision === 'ESCAPE'
                         ? 'border-cyan-400 bg-cyan-950/90 text-cyan-300 shadow-glow-cyan scale-110'
                         : 'border-slate-800 bg-slate-950/60 text-slate-600 opacity-40'
                     }`}
                   >
-                    <DoorOpen className="w-6 h-6 mx-auto mb-1" />
-                    [ESCAPE]
+                    <span>🚀</span>
+                    <span>[ESCAPE]</span>
                   </div>
 
                   <div
-                    className={`px-6 py-4 rounded-xl border-2 font-cyber font-black text-xl transition-all ${
+                    className={`px-5 py-3 rounded-2xl border-2 font-cyber font-black text-xl flex items-center space-x-2 ${
                       finalDecision === 'STAY'
                         ? 'border-purple-400 bg-purple-950/90 text-purple-300 shadow-glow-purple scale-110'
                         : 'border-slate-800 bg-slate-950/60 text-slate-600 opacity-40'
                     }`}
                   >
-                    <Anchor className="w-6 h-6 mx-auto mb-1" />
-                    [STAY]
+                    <span>🏰</span>
+                    <span>[STAY]</span>
                   </div>
                 </div>
 
                 <p className="text-xs sm:text-sm font-sans text-slate-300">
                   {finalDecision === 'ESCAPE'
-                    ? 'You stepped through the dimensional threshold into the infinite multiverse.'
-                    : 'You anchored your consciousness here, claiming eternal dominion over this world.'}
+                    ? 'Transcendence: Leaping beyond the threshold to explore infinite realities. 🌌'
+                    : 'Dominion: Anchoring sovereignty as eternal guardian of this realm. 🛡️'}
                 </p>
               </div>
             </motion.div>
           )}
 
           {/* ========================================================
-              SCENE 8 — FINAL REALITY & WORLD DNA DOSSIER
+              SCENE 8 — FINAL REALITY & VISUAL WORLD DNA
               ======================================================== */}
           {currentScene === 8 && (
             <motion.div
               key="scene8"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1 }}
+              transition={{ duration: 0.8 }}
               className="absolute inset-0 flex flex-col justify-between p-6 sm:p-10 overflow-y-auto"
             >
-              {/* Dynamic transformed backdrop based on actual journey choices */}
-              <div
-                className="absolute inset-0 opacity-25 pointer-events-none"
-                style={{ background: world.previewVisual }}
-              />
+              <div className="absolute inset-0 opacity-25 pointer-events-none" style={{ background: world.previewVisual }} />
               <div className="absolute inset-0 bg-black/60 pointer-events-none" />
 
-              <div className="relative z-10 space-y-6">
+              <div className="relative z-10 space-y-5">
                 {/* Header Badge */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/90 pb-3">
-                  <div>
-                    <span className="text-[10px] font-mono tracking-widest uppercase text-cyan-400 block">
-                      FINAL SYNTHESIZED REALITY // ARCHIVE 2026
-                    </span>
-                    <h2 className="text-2xl sm:text-4xl font-cyber font-black text-white uppercase tracking-wider">
-                      {outcome.archetype}
-                    </h2>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-4xl">👑</span>
+                    <div>
+                      <span className="text-[10px] font-mono tracking-widest uppercase text-cyan-400 block">
+                        FINAL FORGED REALITY
+                      </span>
+                      <h2 className="text-2xl sm:text-3xl font-cyber font-black text-white uppercase tracking-wider">
+                        {outcome.archetype}
+                      </h2>
+                    </div>
                   </div>
                   <div className="text-left sm:text-right">
-                    <span className="text-[10px] font-mono text-slate-500 block">Genome Signature</span>
+                    <span className="text-[10px] font-mono text-slate-500 block">DNA Hash</span>
                     <span className="text-xs font-mono font-bold text-cyan-300">{dna.dnaHash}</span>
                   </div>
                 </div>
 
-                {/* AI Ending Narrative Recap */}
-                <div className="p-5 rounded-2xl bg-black/70 border border-cyan-500/30">
+                {/* AI Ending Narrative */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-black/75 border border-cyan-500/30">
                   <p className="text-base sm:text-lg text-slate-100 font-sans leading-relaxed italic">
-                    "{state.aiEnding?.epilogue || `As the ${state.role?.name || roleCode}, you ${artifactDecision.toLowerCase()}ed the ${artifactName} and chose to ${finalDecision.toLowerCase()}. Reality stabilized along a unique quantum trajectory.`}"
+                    "{state.aiEnding?.epilogue || `As the ${roleCode}, you ${artifactDecision.toLowerCase()}ed the ${artifactName} and chose to ${finalDecision.toLowerCase()}. Reality stabilized along a unique quantum trajectory.`}"
                   </p>
-                  <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-800/80 text-xs font-mono text-slate-400">
-                    <span>Alignment: <strong className="text-cyan-300">{outcome.alignment}</strong></span>
-                    <span>Resonance: <strong className="text-purple-300">{outcome.resonanceRating}%</strong></span>
-                  </div>
                 </div>
 
-                {/* Compact World DNA Summary */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
-                  <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-[10px] text-slate-500 block uppercase">World</span>
-                    <span className="text-white font-bold">{world.name.split(' ')[0]}</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-[10px] text-slate-500 block uppercase">Role & Trait</span>
-                    <span className="text-cyan-300 font-bold">{roleCode} / {traitCode}</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-[10px] text-slate-500 block uppercase">Choice</span>
-                    <span className="text-amber-300 font-bold">{encounterChoice}</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                    <span className="text-[10px] text-slate-500 block uppercase">Artifact & Final</span>
-                    <span className="text-purple-300 font-bold">{artifactDecision} → {finalDecision}</span>
+                {/* Visual World DNA Grid with Emojis */}
+                <div>
+                  <h4 className="text-[11px] font-mono uppercase tracking-widest text-slate-400 mb-2 flex items-center space-x-1.5">
+                    <span>🧬</span>
+                    <span>YOUR ALTERRA WORLD DNA</span>
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center space-x-3">
+                      <span className="text-2xl">{worldEmoji}</span>
+                      <div>
+                        <span className="text-[10px] text-slate-500 block uppercase">WORLD</span>
+                        <span className="text-white font-bold">{world.name.split(' ')[0]}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center space-x-3">
+                      <span className="text-2xl">{roleEmoji}</span>
+                      <div>
+                        <span className="text-[10px] text-slate-500 block uppercase">ROLE & TRAIT</span>
+                        <span className="text-cyan-300 font-bold">{roleCode} · {traitCode}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center space-x-3">
+                      <span className="text-2xl">{encounterEmoji}</span>
+                      <div>
+                        <span className="text-[10px] text-slate-500 block uppercase">CHOICE</span>
+                        <span className="text-amber-300 font-bold">{encounterChoice}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center space-x-3">
+                      <span className="text-2xl">{decisionEmoji}</span>
+                      <div>
+                        <span className="text-[10px] text-slate-500 block uppercase">FATE → CONVERGENCE</span>
+                        <span className="text-purple-300 font-bold">{artifactDecision} → {finalDecision}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Optional Easter Egg */}
                 {dna.easterEggDiscovered && (
-                  <div className="p-3 rounded-xl border border-purple-500/40 bg-purple-950/30 text-xs font-mono text-purple-300 flex items-center space-x-2">
-                    <Radio className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                  <div className="p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/30 text-xs font-mono text-purple-300 flex items-center space-x-2">
+                    <span className="text-lg">🔮</span>
                     <span>Secret Discovered: "This reality remembers choices you haven't made yet."</span>
                   </div>
                 )}
               </div>
 
-              {/* Action Buttons: REPLAY JOURNEY vs PLAY AGAIN */}
+              {/* CTAs */}
               <div className="relative z-10 pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   onClick={handleReplayJourney}
                   className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl font-cyber font-bold text-xs uppercase tracking-wider bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition-all shadow-glow-cyan"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  <span>Replay Journey</span>
+                  <span>Replay Cinematic Journey</span>
                 </button>
 
                 <button
@@ -627,7 +664,7 @@ export default function CinematicJourneyRecap() {
                   className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl font-cyber font-bold text-xs uppercase tracking-wider border border-slate-700 bg-slate-900/90 text-slate-200 hover:border-cyan-400 transition-all"
                 >
                   <Compass className="w-4 h-4" />
-                  <span>Play Again (New Reality)</span>
+                  <span>Forge New Reality</span>
                 </button>
               </div>
             </motion.div>

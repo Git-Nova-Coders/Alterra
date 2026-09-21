@@ -56,8 +56,11 @@ export default function FinalDecision() {
         >
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-700 text-cyan-400">
-                <DoorOpen className="w-7 h-7" />
+              <div className="flex items-center space-x-2">
+                <span className="text-3xl">🚀</span>
+                <div className="p-2 rounded-xl bg-slate-900 border border-slate-700 text-cyan-400">
+                  <DoorOpen className="w-5 h-5" />
+                </div>
               </div>
               {selectedChoice === 'escape' && (
                 <span className="flex items-center space-x-1 text-[11px] font-mono text-cyan-400 bg-cyan-950 px-2.5 py-1 rounded border border-cyan-400/40">
@@ -67,19 +70,20 @@ export default function FinalDecision() {
               )}
             </div>
 
-            <h2 className="text-2xl font-cyber font-black text-white tracking-wide mb-1">
-              [ESCAPE]
+            <h2 className="text-2xl font-cyber font-black text-white tracking-wide mb-1 flex items-center space-x-2">
+              <span>🚀</span>
+              <span>[ESCAPE]</span>
             </h2>
             <p className="text-xs font-mono text-cyan-400 mb-4">Ascend Beyond Boundaries</p>
 
             <p className="text-xs text-slate-300 leading-relaxed font-sans mb-4">
-              Step through the dimensional portal, leaving this simulated ecosystem behind. Carry your knowledge, altered relics, and memories into higher planes of existence.
+              Step through the dimensional portal, leaving this simulated ecosystem behind into higher planes. 🌌
             </p>
           </div>
 
           <div className="pt-4 border-t border-slate-800">
             <span className="text-[11px] font-mono text-cyan-300 block">
-              Outcome Vector: Transcendence, Departure, Dimensional Traveler
+              Vector: 🌌 Multiverse Traveler
             </span>
           </div>
         </motion.div>
@@ -96,8 +100,11 @@ export default function FinalDecision() {
         >
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-700 text-purple-400">
-                <Anchor className="w-7 h-7" />
+              <div className="flex items-center space-x-2">
+                <span className="text-3xl">🏰</span>
+                <div className="p-2 rounded-xl bg-slate-900 border border-slate-700 text-purple-400">
+                  <Anchor className="w-5 h-5" />
+                </div>
               </div>
               {selectedChoice === 'stay' && (
                 <span className="flex items-center space-x-1 text-[11px] font-mono text-purple-400 bg-purple-950 px-2.5 py-1 rounded border border-purple-400/40">
@@ -107,19 +114,20 @@ export default function FinalDecision() {
               )}
             </div>
 
-            <h2 className="text-2xl font-cyber font-black text-white tracking-wide mb-1">
-              [STAY]
+            <h2 className="text-2xl font-cyber font-black text-white tracking-wide mb-1 flex items-center space-x-2">
+              <span>🏰</span>
+              <span>[STAY]</span>
             </h2>
             <p className="text-xs font-mono text-purple-400 mb-4">Anchor Your Sovereignty</p>
 
             <p className="text-xs text-slate-300 leading-relaxed font-sans mb-4">
-              Reject the portal and remain within this world. Bond your consciousness with its transformed atmosphere, becoming its eternal guardian, ruler, or lone survivor.
+              Bond your consciousness with this transformed atmosphere, becoming its eternal guardian or sovereign. 🛡️
             </p>
           </div>
 
           <div className="pt-4 border-t border-slate-800">
             <span className="text-[11px] font-mono text-purple-300 block">
-              Outcome Vector: Sentinel, Resident Entity, Permanent Imprint
+              Vector: 🛡️ Eternal Sovereign
             </span>
           </div>
         </motion.div>

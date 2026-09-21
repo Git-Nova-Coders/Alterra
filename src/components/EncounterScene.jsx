@@ -16,30 +16,33 @@ export default function EncounterScene() {
     if (worldTheme === 'magical') {
       return {
         title: 'Trapped Sylvan Beast',
-        description: 'A wounded bioluminescent stag is entangled in metallic void thorns, leaking luminescent vital sap into the moss.',
+        description: 'A wounded bioluminescent stag is entangled in metallic void thorns.',
         prompt: 'How do you intervene before the thorns claim its life essence?',
         options: [
           {
             id: 'help',
             label: 'Commune & Heal',
-            desc: 'Use resonant attunement to soothe the beast and unravel the thorny snare gently.',
-            consequence: 'Gains the Guardian Blessing & reveals the Sanctum hidden threshold.',
+            emoji: '🤝',
+            desc: 'Use resonant attunement to soothe the beast gently.',
+            consequence: '🌿 Sanctum hidden threshold revealed!',
             icon: HeartHandshake,
             color: 'emerald'
           },
           {
             id: 'evade',
             label: 'Veil & Bypass',
-            desc: 'Conceal your presence and take the concealed root tunnel around the perimeter.',
-            consequence: 'Avoids physical entanglement; discovers alternate shortcut.',
+            emoji: '👤',
+            desc: 'Conceal presence and slip through root tunnels.',
+            consequence: '🕶️ Zero detection; alternate route opened.',
             icon: EyeOff,
             color: 'cyan'
           },
           {
             id: 'take',
             label: 'Extract Primal Sap',
-            desc: 'Harvest the radiating essence crystals from the thorns for personal empowerment.',
-            consequence: 'Gains concentrated raw mana item; world entropy spikes +15%.',
+            emoji: '💎',
+            desc: 'Harvest radiating essence crystals from thorns.',
+            consequence: '⚡ Raw mana gained; entropy surges +15%.',
             icon: Grab,
             color: 'amber'
           }
@@ -48,30 +51,33 @@ export default function EncounterScene() {
     } else if (worldTheme === 'cosmic') {
       return {
         title: 'Stranded Derelict Survivor',
-        description: 'An automated distress beacon flashes from a depressurizing maintenance capsule. A surviving android engineer is pinned beneath collapsed bulkheads.',
-        prompt: 'The life-support battery displays 02:40 minutes remaining.',
+        description: 'An android engineer is pinned beneath collapsed bulkheads in a depressurizing airlock.',
+        prompt: 'Life-support battery displays 02:40 minutes remaining.',
         options: [
           {
             id: 'help',
             label: 'Override Hydraulic Locks',
-            desc: 'Divert your suit reserve power to lift the bulkhead and stabilize the android.',
-            consequence: 'Android yields encrypted access cipher for the relic vault.',
+            emoji: '🤝',
+            desc: 'Divert suit power to lift the heavy bulkhead.',
+            consequence: '🗝️ Vault decryption cipher acquired!',
             icon: HeartHandshake,
             color: 'emerald'
           },
           {
             id: 'evade',
             label: 'Seal Outer Hatch',
-            desc: 'Contain the decompression risk by sealing the corridor and taking maintenance conduits.',
-            consequence: 'Guarantees structural stability; bypasses defensive traps.',
+            emoji: '👤',
+            desc: 'Seal decompression hazard and take conduits.',
+            consequence: '🛡️ Structural hull stabilized; bypasses alarms.',
             icon: EyeOff,
             color: 'cyan'
           },
           {
             id: 'take',
             label: 'Salvage Memory Core',
-            desc: 'Extract the android’s navigational drive unit before oxygen zero.',
-            consequence: 'Gains advanced telemetry drive; station alert level escalates.',
+            emoji: '💎',
+            desc: 'Extract navigational drive before shutdown.',
+            consequence: '💾 Nav drive salvaged; station alerts escalate.',
             icon: Grab,
             color: 'amber'
           }
@@ -81,30 +87,33 @@ export default function EncounterScene() {
     // Cyber default
     return {
       title: 'Cornered Cybernetic Rebel',
-      description: 'A rogue data runner is pinned in the neon alleyway by automated corpo hunter-drones charging lethal ion pulses.',
-      prompt: 'The hunter-drones will fire in 3 seconds.',
+      description: 'A rogue data runner is pinned in the alleyway by hunter-drones charging lethal ion pulses.',
+      prompt: 'Hunter-drones will fire in 3 seconds.',
       options: [
         {
           id: 'help',
           label: 'Deploy EMP Disruption',
-          desc: 'Disable the drone targeting arrays and shield the runner.',
-          consequence: 'The runner gifts you an unauthorized Quantum Core decryption key.',
+          emoji: '🤝',
+          desc: 'Disable hunter-drone arrays and shield runner.',
+          consequence: '🔓 Core decryption key unlocked!',
           icon: HeartHandshake,
           color: 'emerald'
         },
         {
           id: 'evade',
           label: 'Slip into Shadows',
-          desc: 'Use optical camouflage to bypass the skirmish undetected.',
-          consequence: 'Zero detection trace; discovers quiet access conduit.',
+          emoji: '👤',
+          desc: 'Use optical cloak to bypass skirmish unseen.',
+          consequence: '🕶️ Zero trace left; access conduit found.',
           icon: EyeOff,
           color: 'cyan'
         },
         {
           id: 'take',
-          label: 'Hack Dropped Corpo Tech',
-          desc: 'Overclock your deck to seize high-tier corpo munitions during the chaos.',
-          consequence: 'Acquires Military Cyberdeck; network security initiates lockdown.',
+          label: 'Hack Dropped Tech',
+          emoji: '💎',
+          desc: 'Overclock deck to seize military munitions.',
+          consequence: '⚡ Combat Cyberdeck acquired; grid lock alert!',
           icon: Grab,
           color: 'amber'
         }
@@ -163,8 +172,11 @@ export default function EncounterScene() {
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 rounded bg-slate-900 text-cyan-400 border border-slate-700">
-                    <Icon className="w-5 h-5" />
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl">{opt.emoji}</span>
+                    <div className="p-1.5 rounded bg-slate-900 text-cyan-400 border border-slate-700">
+                      <Icon className="w-4 h-4" />
+                    </div>
                   </div>
                   {isSelected && (
                     <span className="flex items-center space-x-1 text-[10px] font-mono text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-400/40">

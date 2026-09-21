@@ -66,9 +66,14 @@ export default function WorldSelection() {
               )}
 
               <div className="relative z-10 space-y-4">
-                <span className="text-[10px] font-mono tracking-widest uppercase px-2 py-0.5 rounded bg-slate-800/90 text-cyan-300 border border-slate-700">
-                  {w.theme}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono tracking-widest uppercase px-2 py-0.5 rounded bg-slate-800/90 text-cyan-300 border border-slate-700">
+                    {w.theme}
+                  </span>
+                  <span className="text-3xl filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                    {w.iconEmoji || '🌐'}
+                  </span>
+                </div>
 
                 <div>
                   <h3 className="text-xl font-cyber font-bold text-white mb-1">
@@ -84,9 +89,12 @@ export default function WorldSelection() {
                 </p>
 
                 {/* Key Artifact Preview */}
-                <div className="p-2.5 rounded bg-slate-900/80 border border-slate-800 text-[11px] font-mono">
-                  <span className="text-slate-400 block mb-0.5">Core Relic:</span>
-                  <span className="text-amber-300 font-medium">{w.artifact}</span>
+                <div className="p-2.5 rounded bg-slate-900/80 border border-slate-800 text-[11px] font-mono flex items-center justify-between">
+                  <div>
+                    <span className="text-slate-400 block mb-0.5">Core Relic:</span>
+                    <span className="text-amber-300 font-medium">{w.artifact}</span>
+                  </div>
+                  <span className="text-2xl">{w.artifactEmoji || '✨'}</span>
                 </div>
 
                 {/* Tags */}

@@ -66,8 +66,11 @@ export default function RoleTraitSelection() {
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 rounded bg-slate-900 border border-slate-700 text-cyan-400">
-                    <Icon className="w-5 h-5" />
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl">{r.emoji}</span>
+                    <div className="p-1.5 rounded bg-slate-900 border border-slate-700 text-cyan-400">
+                      <Icon className="w-4 h-4" />
+                    </div>
                   </div>
                   {isSelected && (
                     <span className="flex items-center space-x-1 text-[10px] font-mono text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-400/40">
@@ -108,9 +111,12 @@ export default function RoleTraitSelection() {
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-purple-300">
-                    {t.badge}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl">{t.emoji}</span>
+                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-purple-300">
+                      {t.badge}
+                    </span>
+                  </div>
                   {isSelected && (
                     <span className="flex items-center space-x-1 text-[10px] font-mono text-purple-400 bg-purple-950 px-2 py-0.5 rounded border border-purple-400/40">
                       <CheckCircle2 className="w-3 h-3" />

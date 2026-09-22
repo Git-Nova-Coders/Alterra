@@ -1,355 +1,431 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
-import VoxelCharacter from './VoxelCharacter';
+import { createVoxelCharacterMesh } from './three/VoxelCharacter3D';
 import VirtualJoystick from './VirtualJoystick';
 import { AudioService } from '../services/audioService';
-import { Sparkles, Eye, Compass, Move, ArrowUpRight, Hand, Waves } from 'lucide-react';
+import { Eye, Hand, Sparkles, Move, Compass, ArrowUpRight } from 'lucide-react';
 
 /**
- * 3D Sleeping & Awakening Scene (Phase 1)
- * - Character is shown sleeping horizontally in zero-G void with gentle breathing
- * - Interactive eye-nudging / rubbing clean:
- *   - Player swipes/drags mouse or touches screen, or presses [Space]/[Enter]
- *   - Character raises hands, rubs eyes clean, and straightens up
- *   - Multi-stage vision clearing (Deep Slumber -> 1st Nudge -> 2nd Nudge clean vision)
- * - Waking up reveals the deep dark 3D void space with ambient stardust and floating choice pillars
+ * DarkAwakeningScene3D (Phase 1 of True 3D Engine)
+ * 
+ * - Full WebGL Canvas with Three.js.
+ * - Boundless dark 3D void filled with 3D starfield particles & nebulous ambient light.
+ * - 3D Rigged Voxel Character floating horizontally in 3D Zero-G asleep.
+ * - Interactive 3D Eye-Nudging / Rubbing Wipe:
+ *   - Player swipes/drags or presses [Space]/[Enter]
+ *   - Character raises 3D arms to eyes in WebGL, scrubbing away sleep
+ *   - Screen dream-blur shader / overlay clears progressively (0% -> 50% -> 100%)
+ *   - Character rotates upright into 3D third-person follow view
+ * - Complete 3D Third-Person movement with WASD and Mobile Virtual Joystick!
  */
 export default function DarkAwakeningScene({ onAwakened }) {
-  // Awakening stages:
-  // 0: SLEEPING (horizontal, eyes shut, deep dream blur)
-  // 1: FIRST_NUDGE (hands rubbing eyes, slit vision, 50% blur)
-  // 2: FULLY_AWAKE (eyes clean, standing upright in 3D void)
+  const mountRef = useRef(null);
+
+  // Awakening stage:
+  // 0: Deep Sleep (horizontal float, closed eyes, deep blur)
+  // 1: First Nudge (rubbing eyes, slit vision, 50% blur)
+  // 2: Fully Awake (eyes clear, standing upright in 3D world with third-person camera)
   const [awakenStage, setAwakenStage] = useState(0);
   const [nudgeProgress, setNudgeProgress] = useState(0); // 0 to 100%
   const [isNudgingArm, setIsNudgingArm] = useState(false);
 
-  // Position in space once awake
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [isMoving, setIsMoving] = useState(false);
-  const [direction, setDirection] = useState('down');
-  const [spaceDust, setSpaceDust] = useState([]);
-  const [distanceTraveled, setDistanceTraveled] = useState(0);
+  // Controls & 3D state refs for animation loop
+  const stateRef = useRef({
+    awakenStage: 0,
+    isNudgingArm: false,
+    keys: {},
+    joystick: { x: 0, y: 0, isMoving: false },
+    playerPos: new THREE.Vector3(0, 0, 0),
+    playerVelocity: new THREE.Vector3(0, 0, 0),
+    playerRotationY: 0,
+    cameraOffset: new THREE.Vector3(0, 3.5, 7.5),
+    cameraLookTarget: new THREE.Vector3(0, 1.6, 0),
+    lastStepTime: 0
+  });
 
-  const keysPressed = useRef({});
-  const lastStepTime = useRef(0);
-  const dragStart = useRef(null);
-
-  // Generate cosmic floating dust
+  // Keep stateRef synced with React state
   useEffect(() => {
-    const dust = Array.from({ length: 45 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      opacity: Math.random() * 0.7 + 0.3,
-      speed: Math.random() * 20 + 10
-    }));
-    setSpaceDust(dust);
-  }, []);
+    stateRef.current.awakenStage = awakenStage;
+    stateRef.current.isNudgingArm = isNudgingArm;
+  }, [awakenStage, isNudgingArm]);
 
-  // Trigger eye nudge action
-  const performNudge = () => {
-    if (awakenStage >= 2) return;
-
-    setIsNudgingArm(true);
-    AudioService.playTone(380, 'sine', 0.25, 0.15, 520);
-
-    setTimeout(() => {
-      setIsNudgingArm(false);
-    }, 650);
-
-    if (awakenStage === 0) {
-      setAwakenStage(1);
-      setNudgeProgress(50);
-      AudioService.playAwakening();
-    } else if (awakenStage === 1) {
-      setAwakenStage(2);
-      setNudgeProgress(100);
-      AudioService.playSuccess();
-    }
-  };
-
-  // Drag / swipe handling to wipe eyes clean
-  const handlePointerDown = (e) => {
-    if (awakenStage < 2) {
-      dragStart.current = { x: e.clientX, y: e.clientY };
-    }
-  };
-
-  const handlePointerUp = (e) => {
-    if (dragStart.current && awakenStage < 2) {
-      const dx = Math.abs(e.clientX - dragStart.current.x);
-      const dy = Math.abs(e.clientY - dragStart.current.y);
-      if (dx > 25 || dy > 25) {
-        performNudge();
-      }
-      dragStart.current = null;
-    }
-  };
-
-  // Keyboard navigation and spacebar nudging
+  // Main Three.js Scene Setup & Render Loop
   useEffect(() => {
+    const container = mountRef.current;
+    if (!container) return;
+
+    // 1. Scene, Camera & Renderer
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x01040a);
+    scene.fog = new THREE.FogExp2(0x01040a, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 2.5, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // 2. Lighting
+    const ambientLight = new THREE.AmbientLight(0x38bdf8, 0.8);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    dirLight.position.set(10, 20, 10);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    scene.add(dirLight);
+
+    const pointLight = new THREE.PointLight(0x00f0ff, 2.5, 30);
+    pointLight.position.set(0, 3, 2);
+    scene.add(pointLight);
+
+    // 3. Boundless 3D Starfield
+    const starsCount = 1200;
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(starsCount * 3);
+    for (let i = 0; i < starsCount * 3; i += 3) {
+      starPos[i] = (Math.random() - 0.5) * 200;
+      starPos[i + 1] = (Math.random() - 0.5) * 200;
+      starPos[i + 2] = (Math.random() - 0.5) * 200;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0x38bdf8,
+      size: 0.35,
+      transparent: true,
+      opacity: 0.8
+    });
+    const starField = new THREE.Points(starGeo, starMat);
+    scene.add(starField);
+
+    // 4. Subtle 3D Void Floor Grid
+    const gridHelper = new THREE.GridHelper(100, 50, 0x00f0ff, 0x0f172a);
+    gridHelper.position.y = -0.01;
+    scene.add(gridHelper);
+
+    // 5. 3D Rigged Roblox Voxel Character
+    const character = createVoxelCharacterMesh();
+    character.root.position.set(0, 1.2, 0);
+    scene.add(character.root);
+
+    // 6. Window Resize Listener
+    const handleResize = () => {
+      if (!container) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    // 7. Keyboard Movement Handlers
     const handleKeyDown = (e) => {
-      const key = e.key.toLowerCase();
-      keysPressed.current[key] = true;
-
-      // Space or Enter nudges eyes when sleeping
-      if ((e.key === ' ' || e.key === 'Enter') && awakenStage < 2) {
-        e.preventDefault();
-        performNudge();
+      stateRef.current.keys[e.key.toLowerCase()] = true;
+      if (e.key === ' ' || e.key === 'Enter') {
+        performNudgeAction();
       }
     };
-
     const handleKeyUp = (e) => {
-      keysPressed.current[e.key.toLowerCase()] = false;
+      stateRef.current.keys[e.key.toLowerCase()] = false;
     };
-
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    // Movement loop active once fully awake
-    const interval = setInterval(() => {
-      if (awakenStage < 2) return;
+    // 8. Animation & Game Loop
+    let lastTime = performance.now();
+    let animId;
 
-      let dx = 0;
-      let dy = 0;
-      const keys = keysPressed.current;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
 
-      if (keys['w'] || keys['arrowup']) { dy -= 4; setDirection('up'); }
-      if (keys['s'] || keys['arrowdown']) { dy += 4; setDirection('down'); }
-      if (keys['a'] || keys['arrowleft']) { dx -= 4; setDirection('left'); }
-      if (keys['d'] || keys['arrowright']) { dx += 4; setDirection('right'); }
+      const currentTime = performance.now();
+      const delta = Math.min((currentTime - lastTime) / 1000, 0.1);
+      lastTime = currentTime;
 
-      if (dx !== 0 || dy !== 0) {
-        setIsMoving(true);
-        setPos((prev) => ({
-          x: Math.max(-280, Math.min(280, prev.x + dx)),
-          y: Math.max(-200, Math.min(200, prev.y + dy))
-        }));
-        setDistanceTraveled((d) => d + Math.sqrt(dx * dx + dy * dy));
+      const state = stateRef.current;
+      const isSleeping = state.awakenStage === 0;
+      const isNudging = state.isNudgingArm;
 
-        const now = Date.now();
-        if (now - lastStepTime.current > 320) {
-          AudioService.playStep();
-          lastStepTime.current = now;
+      // Handle Character Movement when Awake
+      let isMoving = false;
+      if (state.awakenStage === 2 && !isNudging) {
+        let moveX = 0;
+        let moveZ = 0;
+        const keys = state.keys;
+
+        if (keys['w'] || keys['arrowup']) moveZ -= 1;
+        if (keys['s'] || keys['arrowdown']) moveZ += 1;
+        if (keys['a'] || keys['arrowleft']) moveX -= 1;
+        if (keys['d'] || keys['arrowright']) moveX += 1;
+
+        // Joystick inputs
+        if (state.joystick.isMoving) {
+          moveX = state.joystick.x;
+          moveZ = state.joystick.y;
         }
-      } else {
-        setIsMoving(false);
+
+        const moveLength = Math.hypot(moveX, moveZ);
+        if (moveLength > 0.05) {
+          isMoving = true;
+          const speed = 7.0;
+          const normX = moveX / (moveLength || 1);
+          const normZ = moveZ / (moveLength || 1);
+
+          state.playerPos.x += normX * speed * delta;
+          state.playerPos.z += normZ * speed * delta;
+
+          // Face movement heading
+          const targetAngle = Math.atan2(normX, normZ);
+          character.root.rotation.y = THREE.MathUtils.lerp(
+            character.root.rotation.y,
+            targetAngle,
+            0.15
+          );
+
+          // Audio footsteps
+          if (currentTime - state.lastStepTime > 320) {
+            AudioService.playStep();
+            state.lastStepTime = currentTime;
+          }
+        }
       }
-    }, 16);
+
+      // Update Character Position in World
+      character.root.position.x = state.playerPos.x;
+      character.root.position.z = state.playerPos.z;
+
+      // Update Rigged Animation (Legs, arms, sleeping horizontal pose, eye rubbing)
+      character.update({
+        isMoving,
+        speed: 1.2,
+        isSleeping,
+        isNudgingEyes: isNudging,
+        delta
+      });
+
+      // Third-Person Camera Follow Logic
+      if (state.awakenStage === 0) {
+        // Sleep camera: close overhead diagonal view looking at resting face
+        const targetCam = new THREE.Vector3(0, 2.8, 3.2);
+        camera.position.lerp(targetCam, 0.05);
+        camera.lookAt(0, 1.2, 0);
+      } else {
+        // Third-person chase camera behind character
+        const idealOffset = new THREE.Vector3(
+          state.playerPos.x,
+          state.playerPos.y + 3.8,
+          state.playerPos.z + 6.5
+        );
+        camera.position.lerp(idealOffset, 0.08);
+
+        state.cameraLookTarget.set(
+          state.playerPos.x,
+          state.playerPos.y + 1.6,
+          state.playerPos.z
+        );
+        camera.lookAt(state.cameraLookTarget);
+      }
+
+      // Starfield slow drift
+      starField.rotation.y += 0.0003;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
 
     return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      clearInterval(interval);
-    };
-  }, [awakenStage]);
-
-  // Mobile joystick input
-  const handleJoystickMove = ({ x, y, isMoving: moving, direction: dir }) => {
-    if (awakenStage < 2) return;
-    setIsMoving(moving);
-    if (dir) setDirection(dir);
-    if (moving) {
-      setPos((prev) => ({
-        x: Math.max(-280, Math.min(280, prev.x + x * 4)),
-        y: Math.max(-200, Math.min(200, prev.y + y * 4))
-      }));
-      setDistanceTraveled((d) => d + 3);
-
-      const now = Date.now();
-      if (now - lastStepTime.current > 320) {
-        AudioService.playStep();
-        lastStepTime.current = now;
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
       }
+    };
+  }, []);
+
+  // Trigger Eye-Nudging Wipe
+  const performNudgeAction = () => {
+    if (awakenStage === 2) return;
+
+    setIsNudgingArm(true);
+    AudioService.playTone(420, 'sine', 0.25, 0.15, 680);
+
+    const nextProgress = Math.min(100, nudgeProgress + 50);
+    setNudgeProgress(nextProgress);
+
+    setTimeout(() => {
+      setIsNudgingArm(false);
+      if (nextProgress >= 100) {
+        setAwakenStage(2);
+        AudioService.playAwakening();
+      } else if (nextProgress >= 50) {
+        setAwakenStage(1);
+        AudioService.playTone(330, 'triangle', 0.3, 0.1);
+      }
+    }, 900);
+  };
+
+  // Drag / Swipe listener for mouse/touch
+  const dragStart = useRef(null);
+  const handlePointerDown = (e) => {
+    dragStart.current = { x: e.clientX, y: e.clientY };
+  };
+  const handlePointerUp = (e) => {
+    if (!dragStart.current) return;
+    const dx = Math.abs(e.clientX - dragStart.current.x);
+    const dy = Math.abs(e.clientY - dragStart.current.y);
+    if (dx > 25 || dy > 25) {
+      performNudgeAction();
     }
+    dragStart.current = null;
+  };
+
+  const handleJoystickMove = (data) => {
+    stateRef.current.joystick = data;
   };
 
   return (
     <div
+      className="relative w-full h-screen overflow-hidden bg-black font-mono select-none"
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      className="relative w-full min-h-screen bg-[#02050e] overflow-hidden flex flex-col items-center justify-center font-mono select-none"
     >
-      {/* Dynamic Nebulae & Particle Atmosphere */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-950/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/3 right-1/4 w-[28rem] h-[28rem] bg-indigo-950/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[34rem] h-[34rem] bg-violet-950/25 rounded-full blur-3xl" />
+      {/* Three.js WebGL Mount Container */}
+      <div ref={mountRef} className="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing" />
 
-        {spaceDust.map((dust) => (
+      {/* Atmospheric Dream Blur & Eyelid Vignette */}
+      {awakenStage < 2 && (
+        <div
+          className="absolute inset-0 pointer-events-none z-10 transition-all duration-700"
+          style={{
+            backdropFilter: awakenStage === 0 ? 'blur(16px)' : 'blur(5px)',
+            backgroundColor: awakenStage === 0 ? 'rgba(1, 4, 10, 0.65)' : 'rgba(1, 4, 10, 0.25)'
+          }}
+        >
+          {/* Eyelid Shutter Slit */}
           <div
-            key={dust.id}
-            className="absolute rounded-full bg-white transition-transform duration-75"
+            className="absolute inset-0 transition-all duration-700"
             style={{
-              left: `${dust.x}%`,
-              top: `${dust.y}%`,
-              width: `${dust.size}px`,
-              height: `${dust.size}px`,
-              opacity: awakenStage === 0 ? dust.opacity * 0.3 : dust.opacity,
-              boxShadow: `0 0 6px rgba(255,255,255,${dust.opacity})`,
-              transform: `translate(${-pos.x * (dust.size / 3)}px, ${-pos.y * (dust.size / 3)}px)`
+              background:
+                awakenStage === 0
+                  ? 'radial-gradient(ellipse at center, transparent 15%, rgba(0,0,0,0.95) 60%)'
+                  : 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.8) 85%)'
             }}
           />
-        ))}
-      </div>
-
-      {/* Realistic Eyelid Shutter & Slumber Blur */}
-      <AnimatePresence>
-        {awakenStage === 0 && (
-          <motion.div
-            key="deep-slumber"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            className="absolute inset-0 bg-black/90 backdrop-blur-xl z-40 flex flex-col items-center justify-center pointer-events-none"
-          >
-            <div className="flex flex-col items-center gap-3 p-6 text-center">
-              <span className="text-4xl animate-bounce">😴</span>
-              <p className="text-cyan-400 font-bold text-sm tracking-widest uppercase animate-pulse">
-                [ SLUMBERING IN THE VOID ]
-              </p>
-              <span className="text-xs text-slate-400 max-w-xs">
-                You are fast asleep in the dark expanse. Wipe or nudge your eyes to wake up.
-              </span>
-            </div>
-          </motion.div>
-        )}
-
-        {awakenStage === 1 && (
-          <motion.div
-            key="slit-vision"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 pointer-events-none z-40 flex flex-col justify-between"
-          >
-            {/* Upper eyelid */}
-            <motion.div
-              animate={{ height: ['45%', '38%', '42%'] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-full bg-black/80 backdrop-blur-md border-b border-cyan-500/30"
-            />
-            {/* Slit center banner */}
-            <div className="w-full flex items-center justify-center">
-              <span className="text-cyan-300 font-bold tracking-widest text-[11px] px-3 py-1 bg-black/75 rounded-full border border-cyan-500/40 animate-pulse">
-                EYES BLURRY • NUDGE ONCE MORE TO CLEAR
-              </span>
-            </div>
-            {/* Lower eyelid */}
-            <motion.div
-              animate={{ height: ['45%', '38%', '42%'] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-full bg-black/80 backdrop-blur-md border-t border-cyan-500/30"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Header HUD: Story & Eye-Nudging Instructions */}
-      <div className="absolute top-8 inset-x-0 flex flex-col items-center pointer-events-none z-30 px-4 text-center">
-        {awakenStage < 2 ? (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-900/90 border border-cyan-500/40 backdrop-blur-md px-6 py-3.5 rounded-2xl shadow-[0_0_30px_rgba(6,182,212,0.25)] max-w-md pointer-events-auto"
-          >
-            <div className="flex items-center justify-center gap-2 text-cyan-400 text-xs font-bold tracking-widest uppercase mb-1.5">
-              <Hand className="w-4 h-4 animate-pulse text-amber-400" />
-              <span>Nudge Eyes Clean</span>
-            </div>
-            <p className="text-slate-200 text-sm leading-relaxed mb-3">
-              {awakenStage === 0
-                ? 'Your character is floating unconscious. Wipe across the screen or press SPACE to rub your eyes.'
-                : 'Vision is hazy! Rub your eyes clean once more to fully wake up.'}
-            </p>
-
-            {/* Interactive Nudge Button */}
-            <button
-              onClick={performNudge}
-              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r from-amber-500 to-cyan-500 hover:from-amber-400 hover:to-cyan-400 text-slate-950 shadow-lg cursor-pointer flex items-center justify-center gap-2 transition-transform active:scale-95"
-            >
-              <span>{awakenStage === 0 ? '👆 NUDGE EYES AWAKE [SPACE]' : '✨ RUB EYES CLEAN [SPACE]'}</span>
-            </button>
-          </motion.div>
-        ) : (
-          /* Awake HUD */
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="bg-slate-900/80 border border-cyan-500/30 backdrop-blur-md px-5 py-3 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.15)] max-w-md"
-          >
-            <div className="flex items-center justify-center gap-2 text-cyan-400 text-xs font-bold tracking-widest uppercase mb-1">
-              <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '8s' }} />
-              <span>Prologue: Eyes Open in Dark Space</span>
-            </div>
-            <p className="text-slate-200 text-sm leading-relaxed">
-              You gaze into the infinite dark void. Ethereal portals resonate in the distance ahead.
-            </p>
-            <div className="mt-2.5 flex items-center justify-center gap-3 text-xs text-cyan-300/80 bg-slate-950/70 border border-slate-800 px-3 py-1 rounded-full">
-              <Move className="w-3 h-3 text-cyan-400" />
-              <span>WASD / Joystick to float freely</span>
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      {/* 3D Character Rendering Area */}
-      <div
-        className="relative z-20 flex items-center justify-center transition-all duration-300"
-        style={{
-          transform: `translate(${pos.x}px, ${pos.y}px)`
-        }}
-      >
-        <VoxelCharacter
-          isWalking={isMoving}
-          direction={direction}
-          isFloating={awakenStage === 2}
-          isSleeping={awakenStage === 0}
-          isNudgingEyes={isNudgingArm}
-          eyesClosed={awakenStage < 2}
-          scale={1.4}
-        />
-      </div>
-
-      {/* Gateway Transit CTA once awake */}
-      {awakenStage === 2 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="absolute bottom-10 z-30 flex flex-col items-center gap-3"
-        >
-          <button
-            onClick={() => {
-              AudioService.playTone(600, 'sine', 0.3, 0.2);
-              if (onAwakened) onAwakened();
-            }}
-            className="group relative px-6 py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-sm tracking-widest rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.4)] border border-cyan-300/40 flex items-center gap-3 active:scale-95 transition-all cursor-pointer"
-          >
-            <span>APPROACH THE LIGHT GATES</span>
-            <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </button>
-          <span className="text-[11px] text-slate-400 tracking-wider">
-            Space navigated: {Math.round(distanceTraveled)}m
-          </span>
-        </motion.div>
+        </div>
       )}
 
-      {/* Mobile Virtual Joystick */}
-      <div className="md:hidden">
-        <VirtualJoystick
-          onMove={handleJoystickMove}
-          onAction={() => {
-            if (awakenStage < 2) performNudge();
-            else if (onAwakened) onAwakened();
-          }}
-          actionLabel={awakenStage < 2 ? 'NUDGE' : 'GATES'}
-        />
+      {/* Awakening UI Overlays */}
+      <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-6">
+        {/* Top Header Status */}
+        <div className="flex flex-col items-center">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-950/85 border border-cyan-500/30 backdrop-blur-md px-6 py-2.5 rounded-full shadow-[0_0_25px_rgba(6,182,212,0.2)] flex items-center gap-3"
+          >
+            <Sparkles className="w-4 h-4 text-cyan-400 animate-spin" style={{ animationDuration: '8s' }} />
+            <span className="text-xs sm:text-sm text-slate-100 font-bold tracking-widest uppercase">
+              {awakenStage === 0
+                ? 'Deep Slumber in the Infinite Zero-G Void'
+                : awakenStage === 1
+                ? 'Vision Blurry... Rub Eyes Clean'
+                : 'Reality Awoken: Third-Person Free Roam'}
+            </span>
+          </motion.div>
+        </div>
+
+        {/* Center Prompt when asleep / waking */}
+        {awakenStage < 2 && (
+          <div className="flex flex-col items-center justify-center my-auto pointer-events-auto">
+            <motion.div
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="bg-slate-950/90 border border-cyan-500/50 rounded-3xl p-6 sm:p-8 max-w-md text-center shadow-2xl backdrop-blur-lg flex flex-col items-center gap-4"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-cyan-950/70 border border-cyan-400/50 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                {awakenStage === 0 ? <Eye className="w-8 h-8 animate-pulse" /> : <Hand className="w-8 h-8 animate-bounce" />}
+              </div>
+
+              <div>
+                <h2 className="text-lg font-black text-white tracking-wider">
+                  {awakenStage === 0 ? 'YOU ARE ASLEEP' : 'CLEAR YOUR EYES'}
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  {awakenStage === 0
+                    ? 'Swipe across the screen, click, or tap Space to rub your eyes clean.'
+                    : 'One more gentle rub to clear the dimensional fog.'}
+                </p>
+              </div>
+
+              {/* Eye-Wipe Button */}
+              <button
+                onClick={performNudgeAction}
+                disabled={isNudgingArm}
+                className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white font-bold text-xs tracking-widest uppercase shadow-lg shadow-cyan-900/40 border border-cyan-400/40 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Hand className="w-4 h-4" />
+                <span>{isNudgingArm ? 'RUBBING EYES...' : 'RUB EYES CLEAN [SPACE]'}</span>
+              </button>
+
+              {/* Progress gauge */}
+              <div className="w-full bg-slate-900 rounded-full h-2 border border-slate-800 overflow-hidden">
+                <motion.div
+                  className="bg-cyan-400 h-full"
+                  style={{ width: `${nudgeProgress}%` }}
+                  transition={{ ease: 'easeOut', duration: 0.3 }}
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Bottom Nav / Onward Journey Once Awake */}
+        {awakenStage === 2 && (
+          <div className="flex flex-col items-center gap-3 pointer-events-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3"
+            >
+              <button
+                onClick={onAwakened}
+                className="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 font-black text-sm tracking-widest uppercase rounded-2xl shadow-[0_0_35px_rgba(6,182,212,0.4)] border border-white/40 flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
+              >
+                <span>APPROACH REALITY GATES</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+            <span className="text-[11px] text-cyan-300/80 bg-slate-950/80 px-4 py-1 rounded-full border border-cyan-500/20">
+              Use WASD / Arrow Keys or Virtual Joystick to walk your 3D character in Third-Person
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* Mobile Touch Joystick */}
+      {awakenStage === 2 && (
+        <div className="md:hidden pointer-events-auto">
+          <VirtualJoystick
+            onMove={handleJoystickMove}
+            onAction={onAwakened}
+            actionLabel="GATES"
+          />
+        </div>
+      )}
     </div>
   );
 }
-

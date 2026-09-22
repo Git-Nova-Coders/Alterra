@@ -21,11 +21,12 @@ import RealitySummary from './components/RealitySummary';
 import CinematicJourneyRecap from './components/CinematicJourneyRecap';
 import DarkAwakeningScene from './game/DarkAwakeningScene';
 import NexusGatesScene from './game/NexusGatesScene';
+import VoidManifestationScene from './game/VoidManifestationScene';
 import { Shield, Sparkles, Compass, Terminal, Cpu, Flame, Target } from 'lucide-react';
 
 export default function App() {
   const { state, setStage, selectWorld } = useGameState();
-  const { currentStage, atmosphere, mood, intensity } = state;
+  const { currentStage, atmosphere, mood, intensity, world } = state;
 
   // Dynamic atmospheric visual filter calculated by VisualService
   const visualStyle = VisualService.getAtmosphericFilter(atmosphere, mood, intensity);
@@ -42,10 +43,18 @@ export default function App() {
       case GAME_STAGES.WORLD_SELECT:
         return (
           <NexusGatesScene
-            onSelectWorld={(world) => {
-              selectWorld(world);
-              setStage(GAME_STAGES.WORLD_READY);
+            onSelectWorld={(chosenWorld) => {
+              selectWorld(chosenWorld);
+              setStage(GAME_STAGES.VOID_MANIFESTATION);
             }}
+          />
+        );
+
+      case GAME_STAGES.VOID_MANIFESTATION:
+        return (
+          <VoidManifestationScene
+            world={world}
+            onWorldManifested={() => setStage(GAME_STAGES.EXPLORATION)}
           />
         );
 

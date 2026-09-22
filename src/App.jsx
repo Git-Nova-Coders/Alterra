@@ -19,10 +19,11 @@ import FinalDecision from './components/FinalDecision';
 import AIEndingScene from './components/AIEndingScene';
 import RealitySummary from './components/RealitySummary';
 import CinematicJourneyRecap from './components/CinematicJourneyRecap';
+import DarkAwakeningScene from './game/DarkAwakeningScene';
 import { Shield, Sparkles, Compass, Terminal, Cpu, Flame, Target } from 'lucide-react';
 
 export default function App() {
-  const { state } = useGameState();
+  const { state, setStage } = useGameState();
   const { currentStage, atmosphere, mood, intensity } = state;
 
   // Dynamic atmospheric visual filter calculated by VisualService
@@ -31,6 +32,9 @@ export default function App() {
   // Router matching SDD state machine
   const renderCurrentStage = () => {
     switch (currentStage) {
+      case GAME_STAGES.AWAKENING:
+        return <DarkAwakeningScene onAwakened={() => setStage(GAME_STAGES.WORLD_SELECT)} />;
+
       case GAME_STAGES.LANDING:
         return <Landing />;
 

@@ -55,43 +55,41 @@ export default function DarkAwakeningScene({ onAwakened }) {
     const container = mountRef.current;
     if (!container) return;
 
+    const width = container.clientWidth || window.innerWidth;
+    const height = container.clientHeight || window.innerHeight;
+
     // 1. Scene, Camera & Renderer
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x01040a);
-    scene.fog = new THREE.FogExp2(0x01040a, 0.02);
+    scene.background = new THREE.Color(0x050d1a);
 
     const camera = new THREE.PerspectiveCamera(
       60,
-      container.clientWidth / container.clientHeight,
+      width / height,
       0.1,
       1000
     );
-    camera.position.set(0, 2.5, 5);
+    camera.position.set(0, 3.2, 5.5);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
-    // 2. Lighting
-    const ambientLight = new THREE.AmbientLight(0x38bdf8, 0.8);
+    // 2. Bright, Clear Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    const dirLight = new THREE.DirectionalLight(0x38bdf8, 2.5);
     dirLight.position.set(10, 20, 10);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
     scene.add(dirLight);
 
-    const pointLight = new THREE.PointLight(0x00f0ff, 2.5, 30);
-    pointLight.position.set(0, 3, 2);
+    const pointLight = new THREE.PointLight(0x00f0ff, 3.0, 50);
+    pointLight.position.set(0, 4, 3);
     scene.add(pointLight);
 
     // 3. Boundless 3D Starfield
-    const starsCount = 1200;
+    const starsCount = 1500;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starsCount * 3);
     for (let i = 0; i < starsCount * 3; i += 3) {
@@ -102,16 +100,16 @@ export default function DarkAwakeningScene({ onAwakened }) {
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
     const starMat = new THREE.PointsMaterial({
       color: 0x38bdf8,
-      size: 0.35,
+      size: 0.5,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.9
     });
     const starField = new THREE.Points(starGeo, starMat);
     scene.add(starField);
 
     // 4. Subtle 3D Void Floor Grid
-    const gridHelper = new THREE.GridHelper(100, 50, 0x00f0ff, 0x0f172a);
-    gridHelper.position.y = -0.01;
+    const gridHelper = new THREE.GridHelper(100, 50, 0x00f0ff, 0x1e293b);
+    gridHelper.position.y = 0;
     scene.add(gridHelper);
 
     // 5. 3D Rigged Roblox Voxel Character
@@ -306,26 +304,17 @@ export default function DarkAwakeningScene({ onAwakened }) {
       {/* Three.js WebGL Mount Container */}
       <div ref={mountRef} className="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing" />
 
-      {/* Atmospheric Dream Blur & Eyelid Vignette */}
+      {/* Subtle Awakening Vignette (Non-obscuring so 3D character and world are fully visible) */}
       {awakenStage < 2 && (
         <div
           className="absolute inset-0 pointer-events-none z-10 transition-all duration-700"
           style={{
-            backdropFilter: awakenStage === 0 ? 'blur(16px)' : 'blur(5px)',
-            backgroundColor: awakenStage === 0 ? 'rgba(1, 4, 10, 0.65)' : 'rgba(1, 4, 10, 0.25)'
+            background:
+              awakenStage === 0
+                ? 'radial-gradient(ellipse at center, transparent 60%, rgba(3, 7, 18, 0.4) 100%)'
+                : 'radial-gradient(ellipse at center, transparent 80%, rgba(3, 7, 18, 0.2) 100%)'
           }}
-        >
-          {/* Eyelid Shutter Slit */}
-          <div
-            className="absolute inset-0 transition-all duration-700"
-            style={{
-              background:
-                awakenStage === 0
-                  ? 'radial-gradient(ellipse at center, transparent 15%, rgba(0,0,0,0.95) 60%)'
-                  : 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.8) 85%)'
-            }}
-          />
-        </div>
+        />
       )}
 
       {/* Awakening UI Overlays */}

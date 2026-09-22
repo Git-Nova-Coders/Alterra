@@ -121,7 +121,7 @@ export default function App() {
       <HUD />
 
       {/* Main Content Area */}
-      <main className="flex-1 pt-20 pb-28">
+      <main className="w-full min-h-screen relative">
         {renderCurrentStage()}
       </main>
 

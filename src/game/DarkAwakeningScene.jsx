@@ -3,33 +3,31 @@ import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createVoxelCharacterMesh } from './three/VoxelCharacter3D';
 import { InfiniteVoxelTerrainManager } from './three/InfiniteVoxelTerrainManager';
+import { OrbitCameraController } from './three/OrbitCameraController';
 import VirtualJoystick from './VirtualJoystick';
 import { AudioService } from '../services/audioService';
-import { Eye, Hand, Sparkles, Move, Compass, ArrowUpRight } from 'lucide-react';
+import { Eye, Hand, Sparkles, Move, Compass, ArrowUpRight, MousePointer } from 'lucide-react';
 
 /**
- * DarkAwakeningScene3D (Phase 1 of True 3D Engine)
+ * DarkAwakeningScene3D
  * 
  * - Full WebGL Canvas with Three.js.
- * - Boundless dark 3D void filled with 3D starfield particles & nebulous ambient light.
- * - 3D Rigged Voxel Character floating horizontally in 3D Zero-G asleep.
- * - Interactive 3D Eye-Nudging / Rubbing Wipe:
- *   - Player swipes/drags or presses [Space]/[Enter]
- *   - Character raises 3D arms to eyes in WebGL, scrubbing away sleep
- *   - Screen dream-blur shader / overlay clears progressively (0% -> 50% -> 100%)
- *   - Character rotates upright into 3D third-person follow view
- * - Complete 3D Third-Person movement with WASD and Mobile Virtual Joystick!
+ * - Initial view: 45° from below looking up at 3D sleeping character floating in pitch darkness.
+ * - 360° Free Mouse Orbit Camera to inspect the character from any angle.
+ * - Raycast click/tap on character front triggers eye-nudging animation & awakening.
+ * - Procedural terrain seamlessly rises as character awakens into third-person free roam.
  */
 export default function DarkAwakeningScene({ onAwakened }) {
   const mountRef = useRef(null);
 
   // Awakening stage:
-  // 0: Deep Sleep (horizontal float, closed eyes, deep blur)
-  // 1: First Nudge (rubbing eyes, slit vision, 50% blur)
-  // 2: Fully Awake (eyes clear, standing upright in 3D world with third-person camera)
+  // 0: Deep Sleep (pitch darkness, 45° below view, free orbit inspection)
+  // 1: First Nudge (rubbing eyes, slit vision)
+  // 2: Fully Awake (standing upright in 3D world with third-person orbit & WASD movement)
   const [awakenStage, setAwakenStage] = useState(0);
   const [nudgeProgress, setNudgeProgress] = useState(0); // 0 to 100%
   const [isNudgingArm, setIsNudgingArm] = useState(false);
+  const [canTapPrompt, setCanTapPrompt] = useState(false);
 
   // Controls & 3D state refs for animation loop
   const stateRef = useRef({
@@ -37,11 +35,9 @@ export default function DarkAwakeningScene({ onAwakened }) {
     isNudgingArm: false,
     keys: {},
     joystick: { x: 0, y: 0, isMoving: false },
-    playerPos: new THREE.Vector3(0, 0, 0),
+    playerPos: new THREE.Vector3(0, 1.2, 0),
     playerVelocity: new THREE.Vector3(0, 0, 0),
     playerRotationY: 0,
-    cameraOffset: new THREE.Vector3(0, 3.5, 7.5),
-    cameraLookTarget: new THREE.Vector3(0, 1.6, 0),
     lastStepTime: 0
   });
 
@@ -61,8 +57,7 @@ export default function DarkAwakeningScene({ onAwakened }) {
 
     // 1. Scene, Camera & Renderer
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x06152b);
-    scene.fog = new THREE.FogExp2(0x06152b, 0.012);
+    scene.background = new THREE.Color(0x020308); // Pitch dark space
 
     const camera = new THREE.PerspectiveCamera(
       60,
@@ -70,7 +65,6 @@ export default function DarkAwakeningScene({ onAwakened }) {
       0.1,
       1000
     );
-    camera.position.set(0, 4.0, 7.0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
@@ -78,73 +72,82 @@ export default function DarkAwakeningScene({ onAwakened }) {
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
 
-    // 2. Bright, Clear Lighting
-    const ambientLight = new THREE.AmbientLight(0x38bdf8, 1.8);
+    // 2. Free Orbit Camera Controller (Starts 45° from below looking up)
+    const orbitControls = new OrbitCameraController(camera, renderer.domElement, {
+      radius: 5.2,
+      phi: Math.PI * 0.72, // ~130° (45° from below horizontal)
+      theta: 0,
+      target: new THREE.Vector3(0, 1.8, 0),
+      minPhi: 0.1,
+      maxPhi: Math.PI * 0.95,
+      minRadius: 2.2,
+      maxRadius: 18.0,
+      rotateSpeed: 0.0055,
+      damping: 0.12
+    });
+
+    // 3. Dynamic Lighting (Subtle in deep sleep, radiant upon awakening)
+    const ambientLight = new THREE.AmbientLight(0x38bdf8, 1.2);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
     dirLight.position.set(15, 30, 15);
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    const pointLight = new THREE.PointLight(0x00f0ff, 3.5, 60);
-    pointLight.position.set(0, 5, 3);
+    const pointLight = new THREE.PointLight(0x00f0ff, 2.5, 40);
+    pointLight.position.set(0, 3, 2);
     scene.add(pointLight);
 
-    // 3. Boundless 3D Starfield & Nebula Dust
-    const starsCount = 2000;
+    // 4. Boundless 3D Starfield
+    const starsCount = 1200;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starsCount * 3);
     for (let i = 0; i < starsCount * 3; i += 3) {
-      starPos[i] = (Math.random() - 0.5) * 250;
-      starPos[i + 1] = (Math.random() - 0.5) * 250;
-      starPos[i + 2] = (Math.random() - 0.5) * 250;
+      starPos[i] = (Math.random() - 0.5) * 200;
+      starPos[i + 1] = (Math.random() - 0.5) * 200;
+      starPos[i + 2] = (Math.random() - 0.5) * 200;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
     const starMat = new THREE.PointsMaterial({
       color: 0x38bdf8,
-      size: 0.6,
+      size: 0.5,
       transparent: true,
-      opacity: 0.95
+      opacity: 0.8
     });
     const starField = new THREE.Points(starGeo, starMat);
     scene.add(starField);
 
-    // 4. Infinite Procedural 3D Voxel Terrain Manager
+    // 5. Infinite Procedural 3D Voxel Terrain Manager (initialized & visible when awake)
     const terrainManager = new InfiniteVoxelTerrainManager(scene, 'cyber');
     terrainManager.updatePlayerPosition(0, 0);
 
-    // Central Glowing Genesis Altar Platform
-    const altarGroup = new THREE.Group();
-    const altarGeo = new THREE.BoxGeometry(6, 0.6, 6);
-    const altarMat = new THREE.MeshStandardMaterial({
-      color: 0x0369a1,
-      roughness: 0.3,
-      metalness: 0.8
-    });
-    const altarMesh = new THREE.Mesh(altarGeo, altarMat);
-    altarMesh.position.y = -0.3;
-    altarMesh.receiveShadow = true;
-    altarGroup.add(altarMesh);
-
-    // Glowing rim
-    const rimGeo = new THREE.RingGeometry(3.2, 3.6, 32);
-    const rimMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
-      side: THREE.DoubleSide
-    });
-    const rimMesh = new THREE.Mesh(rimGeo, rimMat);
-    rimMesh.rotation.x = -Math.PI / 2;
-    rimMesh.position.y = 0.02;
-    altarGroup.add(rimMesh);
-    scene.add(altarGroup);
-
-    // 5. 3D Rigged Roblox Voxel Character
+    // 6. 3D Rigged Roblox Voxel Character
     const character = createVoxelCharacterMesh();
-    character.root.position.set(0, 1.2, 0);
+    character.root.position.set(0, 1.8, 0);
     scene.add(character.root);
 
-    // 6. Window Resize Listener
+    // Raycaster for tapping directly on character
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    const handleCanvasClick = (event) => {
+      if (orbitControls.hasMovedSignificantly) return; // ignore if dragging camera
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, camera);
+      const intersects = raycaster.intersectObjects(character.root.children, true);
+
+      if (intersects.length > 0) {
+        performNudgeAction();
+      }
+    };
+    renderer.domElement.addEventListener('click', handleCanvasClick);
+
+    // 7. Window Resize Listener
     const handleResize = () => {
       if (!container) return;
       camera.aspect = container.clientWidth / container.clientHeight;
@@ -153,7 +156,7 @@ export default function DarkAwakeningScene({ onAwakened }) {
     };
     window.addEventListener('resize', handleResize);
 
-    // 7. Keyboard Movement Handlers
+    // 8. Keyboard Movement Handlers
     const handleKeyDown = (e) => {
       stateRef.current.keys[e.key.toLowerCase()] = true;
       if (e.key === ' ' || e.key === 'Enter') {
@@ -166,7 +169,7 @@ export default function DarkAwakeningScene({ onAwakened }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    // 8. Animation & Game Loop
+    // 9. Animation & Game Loop
     let lastTime = performance.now();
     let animId;
 
@@ -203,14 +206,17 @@ export default function DarkAwakeningScene({ onAwakened }) {
         if (moveLength > 0.05) {
           isMoving = true;
           const speed = 7.0;
-          const normX = moveX / (moveLength || 1);
-          const normZ = moveZ / (moveLength || 1);
 
-          state.playerPos.x += normX * speed * delta;
-          state.playerPos.z += normZ * speed * delta;
+          // Align movement relative to camera azimuth angle (orbitControls.theta)
+          const camAngle = orbitControls.theta;
+          const worldMoveX = moveX * Math.cos(camAngle) - moveZ * Math.sin(camAngle);
+          const worldMoveZ = moveX * Math.sin(camAngle) + moveZ * Math.cos(camAngle);
+
+          state.playerPos.x += (worldMoveX / moveLength) * speed * delta;
+          state.playerPos.z += (worldMoveZ / moveLength) * speed * delta;
 
           // Face movement heading
-          const targetAngle = Math.atan2(normX, normZ);
+          const targetAngle = Math.atan2(worldMoveX, worldMoveZ);
           character.root.rotation.y = THREE.MathUtils.lerp(
             character.root.rotation.y,
             targetAngle,
@@ -228,6 +234,9 @@ export default function DarkAwakeningScene({ onAwakened }) {
       // Update Character Position in World
       character.root.position.x = state.playerPos.x;
       character.root.position.z = state.playerPos.z;
+      if (state.awakenStage === 2) {
+        character.root.position.y = 1.0;
+      }
 
       // Update Rigged Animation (Legs, arms, sleeping horizontal pose, eye rubbing)
       character.update({
@@ -238,30 +247,29 @@ export default function DarkAwakeningScene({ onAwakened }) {
         delta
       });
 
+      // Update Camera Target to follow player
+      orbitControls.setTarget(
+        state.playerPos.x,
+        state.awakenStage === 0 ? 1.8 : 1.4,
+        state.playerPos.z
+      );
+
+      // In sleep mode, check if camera is looking at front of character
+      if (isSleeping) {
+        // Dot product between camera position and front of sleeping character
+        const camToChar = camera.position.clone().sub(character.root.position).normalize();
+        const isFacingFront = camToChar.z > 0.2;
+        setCanTapPrompt(isFacingFront);
+      }
+
+      // Smoothly update orbit camera
+      orbitControls.update(delta);
+
       // Update Infinite Procedural Voxel Chunks
-      terrainManager.updatePlayerPosition(state.playerPos.x, state.playerPos.z, delta);
-
-      // Third-Person Camera Follow Logic
-      if (state.awakenStage === 0) {
-        // Sleep camera: elevated diagonal view showing the character resting on the voxel altar
-        const targetCam = new THREE.Vector3(0, 3.2, 5.2);
-        camera.position.lerp(targetCam, 0.05);
-        camera.lookAt(0, 0.8, 0);
-      } else {
-        // Third-person chase camera behind character
-        const idealOffset = new THREE.Vector3(
-          state.playerPos.x,
-          state.playerPos.y + 3.8,
-          state.playerPos.z + 6.5
-        );
-        camera.position.lerp(idealOffset, 0.08);
-
-        state.cameraLookTarget.set(
-          state.playerPos.x,
-          state.playerPos.y + 1.6,
-          state.playerPos.z
-        );
-        camera.lookAt(state.cameraLookTarget);
+      if (state.awakenStage > 0) {
+        terrainManager.updatePlayerPosition(state.playerPos.x, state.playerPos.z, delta);
+        scene.background.lerp(new THREE.Color(0x06152b), 0.03);
+        ambientLight.intensity = THREE.MathUtils.lerp(ambientLight.intensity, 1.8, 0.03);
       }
 
       // Starfield slow drift
@@ -277,6 +285,8 @@ export default function DarkAwakeningScene({ onAwakened }) {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      renderer.domElement.removeEventListener('click', handleCanvasClick);
+      orbitControls.dispose();
       terrainManager.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
@@ -359,33 +369,33 @@ export default function DarkAwakeningScene({ onAwakened }) {
         {awakenStage < 2 && (
           <div className="flex flex-col items-center justify-center my-auto pointer-events-auto">
             <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
+              animate={{ scale: [1, 1.03, 1] }}
+              transition={{ repeat: Infinity, duration: 2.5 }}
               className="bg-slate-950/90 border border-cyan-500/50 rounded-3xl p-6 sm:p-8 max-w-md text-center shadow-2xl backdrop-blur-lg flex flex-col items-center gap-4"
             >
               <div className="w-16 h-16 rounded-2xl bg-cyan-950/70 border border-cyan-400/50 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-                {awakenStage === 0 ? <Eye className="w-8 h-8 animate-pulse" /> : <Hand className="w-8 h-8 animate-bounce" />}
+                {awakenStage === 0 ? <MousePointer className="w-8 h-8 animate-pulse text-cyan-400" /> : <Hand className="w-8 h-8 animate-bounce" />}
               </div>
 
               <div>
-                <h2 className="text-lg font-black text-white tracking-wider">
-                  {awakenStage === 0 ? 'YOU ARE ASLEEP' : 'CLEAR YOUR EYES'}
+                <h2 className="text-lg font-black text-white tracking-wider uppercase">
+                  {awakenStage === 0 ? 'Zero-G Slumber' : 'Vision Clearing'}
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
                   {awakenStage === 0
-                    ? 'Swipe across the screen, click, or tap Space to rub your eyes clean.'
-                    : 'One more gentle rub to clear the dimensional fog.'}
+                    ? 'Drag with your mouse to orbit around the sleeping avatar in darkness. Click directly on his face or tap below to awaken him.'
+                    : 'Gently nudge the eyes to clear the dimensional fog.'}
                 </p>
               </div>
 
-              {/* Eye-Wipe Button */}
+              {/* Eye-Wipe / Tap Button */}
               <button
                 onClick={performNudgeAction}
                 disabled={isNudgingArm}
-                className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white font-bold text-xs tracking-widest uppercase shadow-lg shadow-cyan-900/40 border border-cyan-400/40 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-95 text-slate-950 font-black text-xs tracking-widest uppercase shadow-lg shadow-cyan-900/40 border border-cyan-300/40 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                <Hand className="w-4 h-4" />
-                <span>{isNudgingArm ? 'RUBBING EYES...' : 'RUB EYES CLEAN [SPACE]'}</span>
+                <Hand className="w-4 h-4 text-slate-950" />
+                <span>{isNudgingArm ? 'RUBBING EYES...' : 'TAP TO WAKE UP [SPACE]'}</span>
               </button>
 
               {/* Progress gauge */}

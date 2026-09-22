@@ -69,14 +69,14 @@ export default function CinematicJourneyRecap() {
   const finalEmoji = finalDecision === 'ESCAPE' ? '🚀' : '🏰';
 
   // Evaluate final archetypes & World DNA
-  const outcome = DecisionEngine.evaluateArchetype({
-    worldId: world.id,
+  const outcome = DecisionEngine.evaluateOutcome(state || {
+    world,
     encounterChoice: rawEncounter,
     artifactDecision: artifactDecision.toLowerCase(),
     finalDecision: finalDecision.toLowerCase()
   });
 
-  const dna = DecisionEngine.generateWorldDNA(state);
+  const dna = DecisionEngine.generateWorldDNA(state || {});
 
   // Scene Timers for automated video playback
   useEffect(() => {
@@ -147,7 +147,7 @@ export default function CinematicJourneyRecap() {
   return (
     <div className="relative min-h-[90vh] flex flex-col items-center justify-center p-3 sm:p-6 font-mono select-none">
       {/* 16:9 Cinema Widescreen Player Container */}
-      <div className="relative w-full max-w-5xl aspect-video rounded-3xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.9)] border border-slate-800 bg-black flex flex-col justify-between">
+      <div className="relative w-full max-w-5xl aspect-video min-h-[460px] rounded-3xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.9)] border border-slate-800 bg-black flex flex-col justify-between">
         
         {/* Top Cinema Letterbox Bar */}
         <div className="relative z-30 w-full h-12 bg-gradient-to-b from-black via-black/80 to-transparent px-6 flex items-center justify-between pointer-events-none">

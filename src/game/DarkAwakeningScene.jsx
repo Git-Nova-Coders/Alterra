@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createVoxelCharacterMesh } from './three/VoxelCharacter3D';
+import { InfiniteVoxelTerrainManager } from './three/InfiniteVoxelTerrainManager';
 import VirtualJoystick from './VirtualJoystick';
 import { AudioService } from '../services/audioService';
 import { Eye, Hand, Sparkles, Move, Compass, ArrowUpRight } from 'lucide-react';
@@ -60,7 +61,8 @@ export default function DarkAwakeningScene({ onAwakened }) {
 
     // 1. Scene, Camera & Renderer
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050d1a);
+    scene.background = new THREE.Color(0x06152b);
+    scene.fog = new THREE.FogExp2(0x06152b, 0.012);
 
     const camera = new THREE.PerspectiveCamera(
       60,
@@ -68,7 +70,7 @@ export default function DarkAwakeningScene({ onAwakened }) {
       0.1,
       1000
     );
-    camera.position.set(0, 3.2, 5.5);
+    camera.position.set(0, 4.0, 7.0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
@@ -77,40 +79,65 @@ export default function DarkAwakeningScene({ onAwakened }) {
     container.appendChild(renderer.domElement);
 
     // 2. Bright, Clear Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
+    const ambientLight = new THREE.AmbientLight(0x38bdf8, 1.8);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0x38bdf8, 2.5);
-    dirLight.position.set(10, 20, 10);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    dirLight.position.set(15, 30, 15);
+    dirLight.castShadow = true;
     scene.add(dirLight);
 
-    const pointLight = new THREE.PointLight(0x00f0ff, 3.0, 50);
-    pointLight.position.set(0, 4, 3);
+    const pointLight = new THREE.PointLight(0x00f0ff, 3.5, 60);
+    pointLight.position.set(0, 5, 3);
     scene.add(pointLight);
 
-    // 3. Boundless 3D Starfield
-    const starsCount = 1500;
+    // 3. Boundless 3D Starfield & Nebula Dust
+    const starsCount = 2000;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starsCount * 3);
     for (let i = 0; i < starsCount * 3; i += 3) {
-      starPos[i] = (Math.random() - 0.5) * 200;
-      starPos[i + 1] = (Math.random() - 0.5) * 200;
-      starPos[i + 2] = (Math.random() - 0.5) * 200;
+      starPos[i] = (Math.random() - 0.5) * 250;
+      starPos[i + 1] = (Math.random() - 0.5) * 250;
+      starPos[i + 2] = (Math.random() - 0.5) * 250;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
     const starMat = new THREE.PointsMaterial({
       color: 0x38bdf8,
-      size: 0.5,
+      size: 0.6,
       transparent: true,
-      opacity: 0.9
+      opacity: 0.95
     });
     const starField = new THREE.Points(starGeo, starMat);
     scene.add(starField);
 
-    // 4. Subtle 3D Void Floor Grid
-    const gridHelper = new THREE.GridHelper(100, 50, 0x00f0ff, 0x1e293b);
-    gridHelper.position.y = 0;
-    scene.add(gridHelper);
+    // 4. Infinite Procedural 3D Voxel Terrain Manager
+    const terrainManager = new InfiniteVoxelTerrainManager(scene, 'cyber');
+    terrainManager.updatePlayerPosition(0, 0);
+
+    // Central Glowing Genesis Altar Platform
+    const altarGroup = new THREE.Group();
+    const altarGeo = new THREE.BoxGeometry(6, 0.6, 6);
+    const altarMat = new THREE.MeshStandardMaterial({
+      color: 0x0369a1,
+      roughness: 0.3,
+      metalness: 0.8
+    });
+    const altarMesh = new THREE.Mesh(altarGeo, altarMat);
+    altarMesh.position.y = -0.3;
+    altarMesh.receiveShadow = true;
+    altarGroup.add(altarMesh);
+
+    // Glowing rim
+    const rimGeo = new THREE.RingGeometry(3.2, 3.6, 32);
+    const rimMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide
+    });
+    const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+    rimMesh.rotation.x = -Math.PI / 2;
+    rimMesh.position.y = 0.02;
+    altarGroup.add(rimMesh);
+    scene.add(altarGroup);
 
     // 5. 3D Rigged Roblox Voxel Character
     const character = createVoxelCharacterMesh();
@@ -211,12 +238,15 @@ export default function DarkAwakeningScene({ onAwakened }) {
         delta
       });
 
+      // Update Infinite Procedural Voxel Chunks
+      terrainManager.updatePlayerPosition(state.playerPos.x, state.playerPos.z, delta);
+
       // Third-Person Camera Follow Logic
       if (state.awakenStage === 0) {
-        // Sleep camera: close overhead diagonal view looking at resting face
-        const targetCam = new THREE.Vector3(0, 2.8, 3.2);
+        // Sleep camera: elevated diagonal view showing the character resting on the voxel altar
+        const targetCam = new THREE.Vector3(0, 3.2, 5.2);
         camera.position.lerp(targetCam, 0.05);
-        camera.lookAt(0, 1.2, 0);
+        camera.lookAt(0, 0.8, 0);
       } else {
         // Third-person chase camera behind character
         const idealOffset = new THREE.Vector3(
@@ -247,6 +277,7 @@ export default function DarkAwakeningScene({ onAwakened }) {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      terrainManager.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);

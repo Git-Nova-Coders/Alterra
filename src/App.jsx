@@ -22,6 +22,7 @@ import CinematicJourneyRecap from './components/CinematicJourneyRecap';
 import DarkAwakeningScene from './game/DarkAwakeningScene';
 import NexusGatesScene from './game/NexusGatesScene';
 import VoidManifestationScene from './game/VoidManifestationScene';
+import LivingWorldScene from './game/LivingWorldScene';
 import { Shield, Sparkles, Compass, Terminal, Cpu, Flame, Target } from 'lucide-react';
 
 export default function App() {
@@ -74,10 +75,10 @@ export default function App() {
         return <RoleTraitSelection />;
 
       case GAME_STAGES.EXPLORATION:
-        return <ExplorationScene />;
+        return <LivingWorldScene />;
 
       case GAME_STAGES.ENCOUNTER:
-        return <EncounterScene />;
+        return <LivingWorldScene />;
 
       case GAME_STAGES.CONSEQUENCE:
         return <EncounterScene />;

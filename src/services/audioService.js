@@ -103,6 +103,11 @@ class SoundEngine {
     }
   }
 
+  // Alias for compatibility
+  playArtifactReaction(choice) {
+    this.playWorldReaction(choice);
+  }
+
   // Mini-game success
   playSuccess() {
     if (this.muted) return;

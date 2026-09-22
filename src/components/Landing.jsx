@@ -74,14 +74,22 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Primary CTA */}
-        <div className="pt-6">
+        {/* Primary CTA Buttons */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button
+            onClick={() => setStage(GAME_STAGES.AWAKENING)}
+            className="group relative inline-flex items-center space-x-3 px-8 py-4 rounded-xl font-cyber font-black text-sm tracking-wider uppercase bg-gradient-to-r from-cyan-400 via-teal-300 to-blue-500 text-slate-950 hover:brightness-110 active:scale-95 transition-all duration-300 shadow-[0_0_35px_rgba(6,182,212,0.4)] border border-white/50 cursor-pointer"
+          >
+            <span>Awaken into 3D World</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+
           <button
             onClick={() => setStage(GAME_STAGES.WORLD_SELECT)}
-            className="group relative inline-flex items-center space-x-3 px-8 py-4 rounded-lg font-cyber font-bold text-sm tracking-wider uppercase bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 shadow-glow-cyan"
+            className="group inline-flex items-center space-x-2 px-6 py-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase border border-cyan-500/40 bg-slate-900/80 hover:bg-cyan-950/60 text-cyan-300 transition-all cursor-pointer"
           >
-            <span>Initialize Simulation</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <Compass className="w-4 h-4 text-cyan-400" />
+            <span>Direct Portal Gates</span>
           </button>
         </div>
       </motion.div>

@@ -2,12 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { GameStateProvider } from './context/GameStateContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <GameStateProvider>
-      <App />
-    </GameStateProvider>
+    <ErrorBoundary>
+      <GameStateProvider>
+        <App />
+      </GameStateProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );

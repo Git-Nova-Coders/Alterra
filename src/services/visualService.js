@@ -16,41 +16,36 @@ export const VisualService = {
     switch (atmosphere) {
       case 'dawn':
         brightness = 1.05;
-        contrast = 1.1;
-        hueRotate = '15deg';
+        contrast = 1.05;
+        hueRotate = '10deg';
         break;
       case 'noon':
-        brightness = 1.2;
-        contrast = 1.25;
-        saturate = 1.2;
+        brightness = 1.1;
+        contrast = 1.1;
+        saturate = 1.1;
         break;
       case 'twilight':
-        brightness = 0.9;
-        contrast = 1.15;
-        hueRotate = '-20deg';
-        saturate = 1.3;
+        brightness = 1.0;
+        contrast = 1.05;
+        hueRotate = '-10deg';
+        saturate = 1.15;
         break;
       case 'night':
-        brightness = 0.75;
-        contrast = 1.2;
-        hueRotate = '-10deg';
+        brightness = 1.0;
+        contrast = 1.0;
+        hueRotate = '0deg';
         break;
       case 'storm':
-        brightness = 0.7;
-        contrast = 1.4;
-        saturate = 0.85;
+        brightness = 0.95;
+        contrast = 1.1;
+        saturate = 0.95;
         break;
       default:
         break;
     }
 
-    // Adjust by intensity (0 - 100)
-    const intensityFactor = (intensity || 50) / 50;
-    contrast = Number((contrast * intensityFactor).toFixed(2));
-
     return {
-      filter: `brightness(${brightness}) contrast(${contrast}) hue-rotate(${hueRotate}) saturate(${saturate})`,
-      transition: 'filter 1.2s cubic-bezier(0.16, 1, 0.3, 1)'
+      filter: `brightness(${brightness}) contrast(${contrast}) hue-rotate(${hueRotate}) saturate(${saturate})`
     };
   }
 };

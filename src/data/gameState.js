@@ -54,8 +54,8 @@ export const STAGE_FLOW_ORDER = [
  */
 export const INITIAL_GAME_STATE = {
   // Navigation & lifecycle
-  currentStage: GAME_STAGES.AWAKENING,
-  history: [GAME_STAGES.AWAKENING],
+  currentStage: GAME_STAGES.LANDING,
+  history: [GAME_STAGES.LANDING],
 
   // World creation
   world: null,                  // 'cyber' | 'fantasy' | 'mystery' | Object

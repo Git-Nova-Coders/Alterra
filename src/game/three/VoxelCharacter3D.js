@@ -54,7 +54,7 @@ export function createVoxelCharacterMesh() {
   const hairGeo = new THREE.BoxGeometry(0.86, 0.35, 0.86);
   const hairMesh = new THREE.Mesh(hairGeo, hairMat);
   hairMesh.position.y = 0.7;
-  hairGroup.add(hairMesh);
+  headGroup.add(hairMesh);
 
   // Eyes (front face at z = 0.41)
   const eyeGeo = new THREE.BoxGeometry(0.16, 0.1, 0.02);

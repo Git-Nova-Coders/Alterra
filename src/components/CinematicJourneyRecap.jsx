@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState } from '../context/GameStateContext';
 import { GAME_STAGES } from '../data/gameState';
+import { WORLDS } from '../data/worlds';
 import { AudioService } from '../services/audioService';
 import { DecisionEngine } from '../utils/decisionEngine';
 import VoxelCharacter from '../game/VoxelCharacter';
@@ -43,7 +44,8 @@ export default function CinematicJourneyRecap() {
   const [videoProgress, setVideoProgress] = useState(0);
 
   // Extracted journey data
-  const world = state.world || {
+  const rawWorld = state.world;
+  const world = (typeof rawWorld === 'string' ? WORLDS[rawWorld] : rawWorld) || {
     id: 'cyber',
     name: 'Neo-Kowloon 2099',
     iconEmoji: '🏙️',
@@ -167,12 +169,12 @@ export default function CinematicJourneyRecap() {
         </div>
 
         {/* Video Camera Viewport */}
-        <div className="relative w-full flex-1 overflow-hidden flex items-center justify-center">
+        <div className="relative w-full flex-1 min-h-[380px] overflow-hidden flex items-center justify-center">
           
           {/* Subtle Film Grain / Scanline Filter Overlay */}
           <div className="absolute inset-0 scanline opacity-25 pointer-events-none z-20" />
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout">
             {/* ========================================================
                 VIDEO SCENE 1: THE COSMIC AWAKENING
                 ======================================================== */}
@@ -181,8 +183,8 @@ export default function CinematicJourneyRecap() {
                 key="vscene1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0, scale: 1.08 }}
-                transition={{ duration: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6 }}
                 className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden bg-[#02050f]"
               >
                 {/* Parallax Starfield */}
@@ -240,8 +242,8 @@ export default function CinematicJourneyRecap() {
                 key="vscene2"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0, scale: 1.12 }}
-                transition={{ duration: 0.8 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6 }}
                 className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden bg-[#030712]"
               >
                 {/* Background Gate Energy Swirl */}
@@ -595,7 +597,7 @@ export default function CinematicJourneyRecap() {
                     <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center">
                       <span className="text-3xl mb-1">{worldEmoji}</span>
                       <span className="text-[10px] text-slate-400 uppercase font-bold">WORLD</span>
-                      <span className="text-xs text-white font-black">{world.name.split(' ')[0]}</span>
+                      <span className="text-xs text-white font-black">{world?.name ? world.name.split(' ')[0] : 'NEO-KOWLOON'}</span>
                     </div>
 
                     <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center">

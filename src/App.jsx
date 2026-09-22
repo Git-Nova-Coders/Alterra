@@ -20,10 +20,11 @@ import AIEndingScene from './components/AIEndingScene';
 import RealitySummary from './components/RealitySummary';
 import CinematicJourneyRecap from './components/CinematicJourneyRecap';
 import DarkAwakeningScene from './game/DarkAwakeningScene';
+import NexusGatesScene from './game/NexusGatesScene';
 import { Shield, Sparkles, Compass, Terminal, Cpu, Flame, Target } from 'lucide-react';
 
 export default function App() {
-  const { state, setStage } = useGameState();
+  const { state, setStage, selectWorld } = useGameState();
   const { currentStage, atmosphere, mood, intensity } = state;
 
   // Dynamic atmospheric visual filter calculated by VisualService
@@ -39,7 +40,14 @@ export default function App() {
         return <Landing />;
 
       case GAME_STAGES.WORLD_SELECT:
-        return <WorldSelection />;
+        return (
+          <NexusGatesScene
+            onSelectWorld={(world) => {
+              selectWorld(world);
+              setStage(GAME_STAGES.WORLD_READY);
+            }}
+          />
+        );
 
       case GAME_STAGES.WORLD_DIRECTOR:
         return <WorldDirector />;

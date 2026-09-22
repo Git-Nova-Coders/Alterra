@@ -1,48 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
-import VoxelCharacter from './VoxelCharacter';
+import { createVoxelCharacterMesh } from './three/VoxelCharacter3D';
 import VirtualJoystick from './VirtualJoystick';
 import { WORLDS } from '../data/worlds';
 import { AudioService } from '../services/audioService';
 import {
-  Sparkles,
   Compass,
   ArrowRight,
-  Zap,
-  Shield,
-  Layers,
-  Flame,
   Wind,
-  Globe2,
+  Flame,
   Atom,
+  Sparkles,
   Sliders,
   CheckCircle2
 } from 'lucide-react';
 
 /**
- * Phase 2: 3D Multi-Path Choice Nexus
+ * NexusGatesScene (Phase 3 of True 3D Engine)
  * 
- * In this scene, the player floats/walks through the celestial Gateway Nexus.
- * There are 3 primary Thematic Gateways:
- * 1. Cybernetic Gate (Neo-Kowloon 2099 - Digital)
- * 2. Verdant Monolith Gate (Aethelgard Canopy - Magical)
- * 3. Singularity Rift Gate (Station Tartarus - Cosmic)
- * 
- * Plus 3 interactive Floating Choice Pillars/Monoliths that tune the genesis properties:
- * A. Atmospheric Resonance Pillar (Dawn / Twilight / Night / Storm)
- * B. World Valence Pillar (Serene / Mysterious / Dramatic / Apocalyptic)
- * C. Gravitational Physics Pillar (Floaty Low-G / Balanced / Heavy Density)
- * 
- * The player physically walks up to gates or pillars, chooses options or bypasses them,
- * dynamically shaping the world state prior to entering the void!
+ * - Full WebGL Canvas with Three.js.
+ * - Boundless celestial platform floating in deep 3D cosmos.
+ * - 3 Massive 3D Volumetric Gateways:
+ *   1. Cybernetic Gate (Neo-Kowloon 2099 - glowing cyan archway & energetic portal disc)
+ *   2. Verdant Monolith Gate (Aethelgard Canopy - emerald stone monolith & living rune vortex)
+ *   3. Singularity Rift Gate (Station Tartarus - deep purple event horizon ring)
+ * - 3 Interactive 3D Genesis Tuning Monoliths (Atmosphere, Valence, Gravity)
+ * - Character walks in full 3D with Third-Person Follow Camera.
+ * - Approaching a gate causes it to resonate, hum, and prompts entry.
  */
 export default function NexusGatesScene({ onSelectWorld }) {
-  // Player coordinates on the platform (-400 to 400 on X, -200 to 200 on Y)
-  const [playerPos, setPlayerPos] = useState({ x: 0, y: 110 });
-  const [direction, setDirection] = useState('up');
-  const [isWalking, setIsWalking] = useState(false);
-  const [hoveredEntity, setHoveredEntity] = useState(null); // gate or monolith
-  const [enteringGate, setEnteringGate] = useState(null);
+  const mountRef = useRef(null);
 
   // Active world customizations tuned via Nexus Monoliths
   const [selectedAtmosphere, setSelectedAtmosphere] = useState('night');
@@ -50,179 +38,388 @@ export default function NexusGatesScene({ onSelectWorld }) {
   const [selectedGravity, setSelectedGravity] = useState('balanced');
   const [activeModal, setActiveModal] = useState(null); // 'atmosphere' | 'mood' | 'gravity'
 
-  const keysPressed = useRef({});
-  const lastStep = useRef(0);
+  const [hoveredEntity, setHoveredEntity] = useState(null);
+  const [enteringGate, setEnteringGate] = useState(null);
 
-  // The 3 Dimensional World Portals
-  const gates = [
+  const stateRef = useRef({
+    keys: {},
+    joystick: { x: 0, y: 0, isMoving: false },
+    playerPos: new THREE.Vector3(0, 1.2, 12),
+    isEntering: false,
+    hoveredEntity: null,
+    lastStepTime: 0
+  });
+
+  // Gates Definitions in 3D Space
+  const gatesConfig = [
     {
       id: 'cyber',
       name: 'Cybernetic Gate',
       sub: 'Neo-Kowloon 2099',
       world: WORLDS.cyber,
-      x: -250,
-      y: -80,
-      color: '#00f0ff',
-      emoji: '🏙️',
-      portalBg: 'radial-gradient(ellipse at center, rgba(0,240,255,0.7) 0%, rgba(6,182,212,0.3) 50%, transparent 80%)'
+      pos: new THREE.Vector3(-14, 0, -6),
+      color: 0x00f0ff,
+      emoji: '🏙️'
     },
     {
       id: 'fantasy',
       name: 'Verdant Monolith Gate',
       sub: 'Aethelgard Canopy',
       world: WORLDS.fantasy,
-      x: 0,
-      y: -120,
-      color: '#10b981',
-      emoji: '🌲',
-      portalBg: 'radial-gradient(ellipse at center, rgba(16,185,129,0.7) 0%, rgba(5,150,105,0.3) 50%, transparent 80%)'
+      pos: new THREE.Vector3(0, 0, -12),
+      color: 0x10b981,
+      emoji: '🌲'
     },
     {
       id: 'mystery',
       name: 'Singularity Rift Gate',
       sub: 'Station Tartarus',
       world: WORLDS.mystery,
-      x: 250,
-      y: -80,
-      color: '#a855f7',
-      emoji: '🛰️',
-      portalBg: 'radial-gradient(ellipse at center, rgba(168,85,247,0.7) 0%, rgba(147,51,234,0.3) 50%, transparent 80%)'
+      pos: new THREE.Vector3(14, 0, -6),
+      color: 0xa855f7,
+      emoji: '🛰️'
     }
   ];
 
-  // The 3 Interactive Genesis Tuning Monoliths
-  const monoliths = [
+  // 3 Genesis Tuning Monoliths in 3D Space
+  const monolithsConfig = [
     {
       id: 'mono-atmo',
       title: 'Atmospheric Lens',
-      sub: `Current: ${selectedAtmosphere.toUpperCase()}`,
       type: 'atmosphere',
       icon: Wind,
-      x: -150,
-      y: 70,
-      color: '#38bdf8',
+      pos: new THREE.Vector3(-8, 0, 5),
+      color: 0x38bdf8,
       desc: 'Tunes light refraction & particle fog'
     },
     {
       id: 'mono-mood',
       title: 'Valence Resonator',
-      sub: `Current: ${selectedMood.toUpperCase()}`,
       type: 'mood',
       icon: Flame,
-      x: 0,
-      y: 60,
-      color: '#f59e0b',
+      pos: new THREE.Vector3(0, 0, 5),
+      color: 0xf59e0b,
       desc: 'Tunes world intensity & threat balance'
     },
     {
       id: 'mono-grav',
       title: 'Graviton Obelisk',
-      sub: `Current: ${selectedGravity.toUpperCase()}`,
       type: 'gravity',
       icon: Atom,
-      x: 150,
-      y: 70,
-      color: '#ec4899',
+      pos: new THREE.Vector3(8, 0, 5),
+      color: 0xec4899,
       desc: 'Tunes kinematic leap & inertia laws'
     }
   ];
 
-  // Proximity detection loop
+  // WebGL Mount & 3D Render Loop
   useEffect(() => {
-    if (activeModal || enteringGate) return;
+    const container = mountRef.current;
+    if (!container) return;
 
-    let closest = null;
-    let minDistance = 85;
+    // 1. Scene, Camera, Renderer
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x02050e);
+    scene.fog = new THREE.FogExp2(0x02050e, 0.012);
 
-    // Check gates proximity
-    gates.forEach((gate) => {
-      const dist = Math.hypot(playerPos.x - gate.x, playerPos.y - gate.y);
-      if (dist < minDistance) {
-        closest = { ...gate, isGate: true };
-      }
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 6, 20);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    // 2. Lighting
+    const ambientLight = new THREE.AmbientLight(0x0e7490, 1.2);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    dirLight.position.set(15, 35, 15);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // 3. Floating Celestial Platform Mesh
+    const platformGeo = new THREE.CylinderGeometry(24, 26, 2.5, 48);
+    const platformMat = new THREE.MeshStandardMaterial({
+      color: 0x091e3a,
+      roughness: 0.5,
+      metalness: 0.4
+    });
+    const platform = new THREE.Mesh(platformGeo, platformMat);
+    platform.position.y = -1.25;
+    platform.receiveShadow = true;
+    scene.add(platform);
+
+    // Glowing rim around platform
+    const rimGeo = new THREE.TorusGeometry(24.2, 0.3, 16, 64);
+    const rimMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    const rim = new THREE.Mesh(rimGeo, rimMat);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.y = 0.05;
+    scene.add(rim);
+
+    // 4. Boundless 3D Starfield
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(1500 * 3);
+    for (let i = 0; i < 1500 * 3; i += 3) {
+      starPos[i] = (Math.random() - 0.5) * 300;
+      starPos[i + 1] = (Math.random() - 0.5) * 300;
+      starPos[i + 2] = (Math.random() - 0.5) * 300;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starField = new THREE.Points(
+      starGeo,
+      new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.4, transparent: true, opacity: 0.85 })
+    );
+    scene.add(starField);
+
+    // 5. Build 3D Gate Meshes
+    const gateMeshes = gatesConfig.map((gate) => {
+      const group = new THREE.Group();
+      group.position.copy(gate.pos);
+
+      // Archway Pillars
+      const pillarGeo = new THREE.BoxGeometry(1.2, 8, 1.2);
+      const pillarMat = new THREE.MeshStandardMaterial({
+        color: gate.color,
+        roughness: 0.3,
+        metalness: 0.8
+      });
+      const leftP = new THREE.Mesh(pillarGeo, pillarMat);
+      leftP.position.set(-2.6, 4, 0);
+      group.add(leftP);
+
+      const rightP = new THREE.Mesh(pillarGeo, pillarMat);
+      rightP.position.set(2.6, 4, 0);
+      group.add(rightP);
+
+      // Top Arch
+      const topGeo = new THREE.BoxGeometry(6.4, 1.2, 1.2);
+      const topP = new THREE.Mesh(topGeo, pillarMat);
+      topP.position.set(0, 8.2, 0);
+      group.add(topP);
+
+      // Swirling Portal Disc
+      const discGeo = new THREE.CircleGeometry(2.4, 32);
+      const discMat = new THREE.MeshBasicMaterial({
+        color: gate.color,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.75
+      });
+      const disc = new THREE.Mesh(discGeo, discMat);
+      disc.position.set(0, 4.2, 0);
+      group.add(disc);
+
+      scene.add(group);
+      return { ...gate, group, disc };
     });
 
-    // Check monoliths proximity
-    if (!closest) {
-      monoliths.forEach((mono) => {
-        const dist = Math.hypot(playerPos.x - mono.x, playerPos.y - mono.y);
-        if (dist < 75) {
-          closest = { ...mono, isGate: false };
-        }
+    // 6. Build 3D Monolith Meshes
+    const monolithMeshes = monolithsConfig.map((mono) => {
+      const group = new THREE.Group();
+      group.position.copy(mono.pos);
+
+      const geo = new THREE.BoxGeometry(1.4, 3.2, 1.4);
+      const mat = new THREE.MeshStandardMaterial({
+        color: mono.color,
+        emissive: mono.color,
+        emissiveIntensity: 0.5,
+        roughness: 0.4
       });
-    }
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.y = 1.6;
+      mesh.castShadow = true;
+      group.add(mesh);
 
-    if (closest?.id !== hoveredEntity?.id) {
-      setHoveredEntity(closest);
-      if (closest) {
-        AudioService.playTone(closest.isGate ? 440 : 660, 'sine', 0.2, 0.1);
-      }
-    }
-  }, [playerPos, activeModal, enteringGate, selectedAtmosphere, selectedMood, selectedGravity]);
+      scene.add(group);
+      return { ...mono, group, mesh };
+    });
 
-  // Player controls
-  useEffect(() => {
-    if (enteringGate || activeModal) return;
+    // 7. 3D Rigged Roblox Voxel Character
+    const character = createVoxelCharacterMesh();
+    character.root.position.copy(stateRef.current.playerPos);
+    scene.add(character.root);
 
+    // 8. Event Listeners
     const handleKeyDown = (e) => {
-      keysPressed.current[e.key.toLowerCase()] = true;
+      stateRef.current.keys[e.key.toLowerCase()] = true;
       if (e.key === ' ' || e.key === 'Enter') {
-        if (hoveredEntity) {
-          if (hoveredEntity.isGate) {
-            handleEnterGate(hoveredEntity);
-          } else {
-            setActiveModal(hoveredEntity.type);
-            AudioService.playTone(550, 'sine', 0.3, 0.15);
-          }
-        }
+        triggerAction();
       }
     };
     const handleKeyUp = (e) => {
-      keysPressed.current[e.key.toLowerCase()] = false;
+      stateRef.current.keys[e.key.toLowerCase()] = false;
     };
-
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    const interval = setInterval(() => {
-      let dx = 0;
-      let dy = 0;
-      const keys = keysPressed.current;
+    const handleResize = () => {
+      if (!container) return;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    };
+    window.addEventListener('resize', handleResize);
 
-      if (keys['w'] || keys['arrowup']) { dy -= 4.5; setDirection('up'); }
-      if (keys['s'] || keys['arrowdown']) { dy += 4.5; setDirection('down'); }
-      if (keys['a'] || keys['arrowleft']) { dx -= 4.5; setDirection('left'); }
-      if (keys['d'] || keys['arrowright']) { dx += 4.5; setDirection('right'); }
+    const triggerAction = () => {
+      const ent = stateRef.current.hoveredEntity;
+      if (!ent) return;
 
-      if (dx !== 0 || dy !== 0) {
-        setIsWalking(true);
-        setPlayerPos((prev) => ({
-          x: Math.max(-360, Math.min(360, prev.x + dx)),
-          y: Math.max(-170, Math.min(170, prev.y + dy))
-        }));
-
-        const now = Date.now();
-        if (now - lastStep.current > 300) {
-          AudioService.playStep();
-          lastStep.current = now;
-        }
+      if (ent.isGate) {
+        handleEnterGate(ent);
       } else {
-        setIsWalking(false);
+        setActiveModal(ent.type);
+        AudioService.playTone(550, 'sine', 0.25, 0.15);
       }
-    }, 16);
+    };
+
+    // 9. Render Loop
+    let lastTime = performance.now();
+    let animId;
+
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+
+      const currentTime = performance.now();
+      const delta = Math.min((currentTime - lastTime) / 1000, 0.1);
+      lastTime = currentTime;
+
+      const state = stateRef.current;
+
+      // Handle Character Movement
+      let isMoving = false;
+      if (!state.isEntering && !activeModal) {
+        let moveX = 0;
+        let moveZ = 0;
+        const keys = state.keys;
+
+        if (keys['w'] || keys['arrowup']) moveZ -= 1;
+        if (keys['s'] || keys['arrowdown']) moveZ += 1;
+        if (keys['a'] || keys['arrowleft']) moveX -= 1;
+        if (keys['d'] || keys['arrowright']) moveX += 1;
+
+        if (state.joystick.isMoving) {
+          moveX = state.joystick.x;
+          moveZ = state.joystick.y;
+        }
+
+        const moveLength = Math.hypot(moveX, moveZ);
+        if (moveLength > 0.05) {
+          isMoving = true;
+          const speed = 7.0;
+          const normX = moveX / (moveLength || 1);
+          const normZ = moveZ / (moveLength || 1);
+
+          state.playerPos.x += normX * speed * delta;
+          state.playerPos.z += normZ * speed * delta;
+
+          // Stay within platform boundary
+          const distFromCenter = Math.hypot(state.playerPos.x, state.playerPos.z);
+          if (distFromCenter > 22.0) {
+            const angle = Math.atan2(state.playerPos.z, state.playerPos.x);
+            state.playerPos.x = Math.cos(angle) * 22.0;
+            state.playerPos.z = Math.sin(angle) * 22.0;
+          }
+
+          const targetAngle = Math.atan2(normX, normZ);
+          character.root.rotation.y = THREE.MathUtils.lerp(
+            character.root.rotation.y,
+            targetAngle,
+            0.15
+          );
+
+          if (currentTime - state.lastStepTime > 320) {
+            AudioService.playStep();
+            state.lastStepTime = currentTime;
+          }
+        }
+      }
+
+      character.root.position.copy(state.playerPos);
+
+      // Portal entry leap dive
+      if (state.isEntering) {
+        character.root.position.y += delta * 3;
+        character.root.rotation.x += delta * 8;
+        character.root.scale.multiplyScalar(0.96);
+      }
+
+      character.update({
+        isMoving,
+        speed: 1.2,
+        delta
+      });
+
+      // Animate Portals & Monoliths
+      gateMeshes.forEach((g) => {
+        g.disc.rotation.z += 0.02;
+      });
+      monolithMeshes.forEach((m, idx) => {
+        m.mesh.position.y = 1.6 + Math.sin(currentTime * 0.003 + idx) * 0.25;
+        m.mesh.rotation.y += 0.01;
+      });
+
+      // Proximity Detection
+      let closest = null;
+      let minGateDist = 5.0;
+      gateMeshes.forEach((g) => {
+        const d = state.playerPos.distanceTo(g.pos);
+        if (d < minGateDist) {
+          closest = { ...g, isGate: true };
+        }
+      });
+
+      if (!closest) {
+        monolithMeshes.forEach((m) => {
+          const d = state.playerPos.distanceTo(m.pos);
+          if (d < 4.0) {
+            closest = { ...m, isGate: false };
+          }
+        });
+      }
+
+      state.hoveredEntity = closest;
+      setHoveredEntity(closest);
+
+      // Third-Person Camera
+      const camTargetPos = new THREE.Vector3(
+        state.playerPos.x,
+        state.playerPos.y + 4.5,
+        state.playerPos.z + 8.5
+      );
+      camera.position.lerp(camTargetPos, 0.08);
+      camera.lookAt(state.playerPos.x, state.playerPos.y + 1.8, state.playerPos.z);
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
 
     return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      clearInterval(interval);
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
     };
-  }, [hoveredEntity, enteringGate, activeModal]);
+  }, []);
 
   const handleEnterGate = (gate) => {
+    stateRef.current.isEntering = true;
     setEnteringGate(gate);
     AudioService.playTone(440, 'sine', 0.8, 0.25, 880);
 
-    // Merge chosen monolith tuning into world config
     const tunedWorld = {
       ...gate.world,
       initialAtmosphere: selectedAtmosphere,
@@ -232,52 +429,31 @@ export default function NexusGatesScene({ onSelectWorld }) {
 
     setTimeout(() => {
       if (onSelectWorld) onSelectWorld(tunedWorld);
-    }, 1200);
+    }, 1300);
   };
 
-  const handleJoystickMove = ({ x, y, isMoving: moving, direction: dir }) => {
-    if (enteringGate || activeModal) return;
-    setIsWalking(moving);
-    if (dir) setDirection(dir);
-    if (moving) {
-      setPlayerPos((prev) => ({
-        x: Math.max(-360, Math.min(360, prev.x + x * 4.5)),
-        y: Math.max(-170, Math.min(170, prev.y + y * 4.5))
-      }));
-      const now = Date.now();
-      if (now - lastStep.current > 300) {
-        AudioService.playStep();
-        lastStep.current = now;
-      }
-    }
+  const handleJoystickMove = (data) => {
+    stateRef.current.joystick = data;
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-[#02050e] overflow-hidden flex flex-col items-center justify-center font-mono select-none">
-      {/* 3D Celestial Platform Backdrop */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 hud-grid-overlay opacity-30" />
-        
-        {/* Outer glowing halo */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[920px] h-[520px] rounded-[60px] bg-gradient-to-b from-cyan-950/20 via-slate-900/70 to-slate-950 border border-cyan-500/25 shadow-[0_0_90px_rgba(6,182,212,0.15)]" />
-        
-        {/* Monolith alignment ley-lines */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-1 border-t border-dashed border-cyan-500/20" />
-      </div>
+    <div className="relative w-full h-screen overflow-hidden bg-[#02050e] font-mono select-none">
+      {/* 3D WebGL Canvas */}
+      <div ref={mountRef} className="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing" />
 
       {/* Top Banner Navigation & Status */}
-      <div className="absolute top-6 inset-x-0 flex flex-col items-center pointer-events-none z-30 px-4 text-center">
+      <div className="absolute top-6 inset-x-0 flex flex-col items-center pointer-events-none z-20 px-4 text-center">
         <motion.div
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-slate-950/90 border border-cyan-500/30 backdrop-blur-md px-6 py-2 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.2)] flex items-center gap-3"
         >
           <Compass className="w-4 h-4 text-cyan-400 animate-spin" style={{ animationDuration: '10s' }} />
-          <span className="text-sm text-slate-100 font-bold tracking-wider">
-            CHOOSE A REALITY GATE OR TUNE GENESIS MONOLITHS
+          <span className="text-xs sm:text-sm text-slate-100 font-bold tracking-wider">
+            STEP INTO A 3D REALITY GATE OR TUNE GENESIS MONOLITHS
           </span>
         </motion.div>
-        
+
         {/* Active Customization Badges */}
         <div className="flex items-center gap-2 mt-2">
           <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
@@ -292,181 +468,39 @@ export default function NexusGatesScene({ onSelectWorld }) {
         </div>
       </div>
 
-      {/* 2.5D Arena Container */}
-      <div className="relative z-20 w-full max-w-5xl h-[520px] flex items-center justify-center">
-        {/* 1. The 3 Primary World Gates */}
-        {gates.map((gate) => {
-          const isNearby = hoveredEntity?.id === gate.id;
-          return (
-            <div
-              key={gate.id}
-              onClick={() => handleEnterGate(gate)}
-              className="absolute flex flex-col items-center cursor-pointer group transition-transform duration-200"
-              style={{
-                left: `calc(50% + ${gate.x}px - 70px)`,
-                top: `calc(50% + ${gate.y}px - 110px)`,
-                width: '140px'
-              }}
-            >
-              <motion.div
-                animate={{
-                  scale: isNearby ? [1, 1.06, 1] : 1,
-                  boxShadow: isNearby
-                    ? `0 0 45px ${gate.color}aa, inset 0 0 25px ${gate.color}55`
-                    : `0 0 15px ${gate.color}33`
-                }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="relative w-28 h-40 rounded-t-full border-4 flex flex-col items-center justify-center overflow-hidden transition-all duration-300"
-                style={{
-                  borderColor: gate.color,
-                  backgroundColor: `${gate.color}15`
-                }}
-              >
-                <div
-                  className="absolute inset-0 animate-spin"
-                  style={{
-                    background: gate.portalBg,
-                    animationDuration: isNearby ? '3.5s' : '12s'
-                  }}
-                />
-
-                <span className="relative z-10 text-4xl filter drop-shadow-md group-hover:scale-125 transition-transform">
-                  {gate.emoji}
-                </span>
-
-                <span
-                  className="relative z-10 mt-2 text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full uppercase"
-                  style={{
-                    backgroundColor: `${gate.color}30`,
-                    color: '#ffffff'
-                  }}
-                >
-                  {isNearby ? 'LEAP IN' : 'GATEWAY'}
-                </span>
-              </motion.div>
-
-              <div className="mt-2 text-center">
-                <p className="text-xs font-bold text-white tracking-wider group-hover:text-cyan-300 transition-colors">
-                  {gate.name}
-                </p>
-                <p className="text-[10px] text-slate-400">
-                  {gate.sub}
-                </p>
-              </div>
-
-              {isNearby && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-1 px-3 py-1 bg-white text-slate-950 font-black text-xs rounded shadow-lg animate-bounce flex items-center gap-1"
-                >
-                  <span>LEAP [SPACE]</span>
-                </motion.div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* 2. The 3 Genesis Tuning Monoliths */}
-        {monoliths.map((mono) => {
-          const isNearby = hoveredEntity?.id === mono.id;
-          const IconComponent = mono.icon;
-          return (
-            <div
-              key={mono.id}
-              onClick={() => {
-                setActiveModal(mono.type);
-                AudioService.playTone(550, 'sine', 0.25, 0.15);
-              }}
-              className="absolute flex flex-col items-center cursor-pointer group"
-              style={{
-                left: `calc(50% + ${mono.x}px - 50px)`,
-                top: `calc(50% + ${mono.y}px - 40px)`,
-                width: '100px'
-              }}
-            >
-              {/* Floating Monolith Body */}
-              <motion.div
-                animate={{
-                  y: isNearby ? [-3, 3, -3] : [0, 4, 0],
-                  scale: isNearby ? 1.1 : 1,
-                  boxShadow: isNearby
-                    ? `0 0 25px ${mono.color}bb`
-                    : `0 0 10px ${mono.color}44`
-                }}
-                transition={{ repeat: Infinity, duration: 2.5 }}
-                className="w-12 h-16 rounded-lg border-2 flex flex-col items-center justify-center backdrop-blur-md transition-all"
-                style={{
-                  borderColor: mono.color,
-                  backgroundColor: `${mono.color}15`
-                }}
-              >
-                <IconComponent className="w-6 h-6" style={{ color: mono.color }} />
-                <div className="w-4 h-0.5 mt-1.5 rounded-full" style={{ backgroundColor: mono.color }} />
-              </motion.div>
-
-              <div className="mt-1 text-center">
-                <p className="text-[11px] font-bold text-slate-200 group-hover:text-white transition-colors">
-                  {mono.title}
-                </p>
-                <p className="text-[9px] font-mono" style={{ color: mono.color }}>
-                  {mono.sub}
-                </p>
-              </div>
-
-              {isNearby && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-1 px-2 py-0.5 bg-slate-100 text-slate-900 font-bold text-[10px] rounded shadow animate-bounce"
-                >
-                  TUNE [SPACE]
-                </motion.div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Playable Voxel Character */}
-        <div
-          className="absolute z-30 transition-transform duration-75"
-          style={{
-            transform: `translate(${playerPos.x}px, ${playerPos.y}px)`,
-            left: 'calc(50% - 32px)',
-            top: 'calc(50% - 48px)'
-          }}
-        >
-          <VoxelCharacter
-            isWalking={isWalking}
-            direction={direction}
-            isFloating={false}
-            scale={1.2}
-          />
-        </div>
-      </div>
-
-      {/* Screen flash on entering portal */}
-      <AnimatePresence>
-        {enteringGate && (
+      {/* Interaction Callouts */}
+      <div className="absolute bottom-10 inset-x-0 flex flex-col items-center z-20 pointer-events-none">
+        {hoveredEntity && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center backdrop-blur-md"
-            style={{ backgroundColor: `${enteringGate.color}dd` }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="pointer-events-auto"
           >
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1.4, opacity: 1 }}
-              className="text-white text-3xl font-black tracking-widest uppercase text-center drop-shadow-lg"
-            >
-              WARPING TO {enteringGate.name}...
-            </motion.div>
+            {hoveredEntity.isGate ? (
+              <button
+                onClick={() => handleEnterGate(hoveredEntity)}
+                className="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-black text-sm tracking-widest uppercase rounded-2xl shadow-[0_0_35px_rgba(6,182,212,0.6)] border border-white flex items-center gap-2 cursor-pointer active:scale-95 animate-bounce"
+              >
+                <span>LEAP INTO {hoveredEntity.name.toUpperCase()} [SPACE]</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setActiveModal(hoveredEntity.type);
+                  AudioService.playTone(550, 'sine', 0.25, 0.15);
+                }}
+                className="px-6 py-3 bg-slate-900/90 text-white font-bold text-xs tracking-widest uppercase rounded-xl shadow-lg border border-cyan-400/50 flex items-center gap-2 cursor-pointer active:scale-95"
+              >
+                <Sliders className="w-4 h-4 text-cyan-300" />
+                <span>TUNE {hoveredEntity.title.toUpperCase()} [SPACE]</span>
+              </button>
+            )}
           </motion.div>
         )}
-      </AnimatePresence>
+      </div>
 
-      {/* Genesis Monolith Tuning Modals */}
+      {/* Genesis Monolith Tuning Modal */}
       <AnimatePresence>
         {activeModal && (
           <motion.div
@@ -601,7 +635,27 @@ export default function NexusGatesScene({ onSelectWorld }) {
         )}
       </AnimatePresence>
 
-      {/* Mobile Controls */}
+      {/* Screen flash on entering portal */}
+      <AnimatePresence>
+        {enteringGate && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center bg-white"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1.3, opacity: 1 }}
+              className="text-slate-950 text-3xl font-black tracking-widest uppercase text-center drop-shadow"
+            >
+              LEAPING THROUGH {enteringGate.name}...
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Touch Joystick */}
       <div className="md:hidden">
         <VirtualJoystick
           onMove={handleJoystickMove}

@@ -90,6 +90,21 @@ body {
   50% { transform: translateY(-12px) rotateZ(2deg); }
 }
 
+@keyframes sleepBreathing {
+  0%, 100% { transform: rotateX(75deg) rotateZ(8deg) translateY(0px) scale(0.98); }
+  50% { transform: rotateX(72deg) rotateZ(6deg) translateY(-8px) scale(1.02); }
+}
+
+@keyframes eyeRubLeft {
+  0%, 100% { transform: rotateZ(120deg) rotateX(-50deg) translateX(4px); }
+  50% { transform: rotateZ(135deg) rotateX(-65deg) translateX(7px); }
+}
+
+@keyframes eyeRubRight {
+  0%, 100% { transform: rotateZ(-120deg) rotateX(-50deg) translateX(-4px); }
+  50% { transform: rotateZ(-135deg) rotateX(-65deg) translateX(-7px); }
+}
+
 .animate-arm-left {
   animation: armSwingLeft 0.5s infinite linear;
 }
@@ -108,6 +123,18 @@ body {
 
 .animate-float {
   animation: zeroGFloat 3.5s ease-in-out infinite;
+}
+
+.animate-sleeping {
+  animation: sleepBreathing 4s ease-in-out infinite;
+}
+
+.animate-rub-left {
+  animation: eyeRubLeft 0.6s ease-in-out infinite;
+}
+
+.animate-rub-right {
+  animation: eyeRubRight 0.6s ease-in-out infinite;
 }
 
 ::-webkit-scrollbar-thumb:hover {

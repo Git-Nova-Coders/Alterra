@@ -14,6 +14,8 @@ export default function VoxelCharacter({
   direction = 'down', // 'up' | 'down' | 'left' | 'right'
   isFloating = false,
   eyesClosed = false,
+  isSleeping = false,
+  isNudgingEyes = false,
   colorScheme = {
     skin: '#ffdbac',
     shirt: '#2563eb',
@@ -23,8 +25,11 @@ export default function VoxelCharacter({
   },
   scale = 1
 }) {
-  // Rotation style based on direction
+  // Rotation style based on direction and state
   const getRotation = () => {
+    if (isSleeping) {
+      return 'rotateX(75deg) rotateZ(10deg)';
+    }
     switch (direction) {
       case 'up': return 'rotateY(180deg)';
       case 'left': return 'rotateY(90deg)';
@@ -44,18 +49,35 @@ export default function VoxelCharacter({
     >
       {/* Ground Shadow or Space Glow */}
       <div
-        className={`w-16 h-5 rounded-full mx-auto transition-all duration-300 ${
-          isFloating
+        className={`w-16 h-5 rounded-full mx-auto transition-all duration-500 ${
+          isSleeping
+            ? 'bg-cyan-500/10 blur-xl scale-125 animate-pulse'
+            : isFloating
             ? 'bg-cyan-500/20 blur-md scale-75 animate-pulse'
             : 'bg-black/50 blur-sm scale-100'
         }`}
         style={{ marginTop: '90px' }}
       />
 
+      {/* Floating Zzz micro-particles if sleeping */}
+      {isSleeping && (
+        <div className="absolute -top-10 right-0 z-30 flex flex-col items-center pointer-events-none select-none">
+          <span className="text-cyan-300 font-bold text-xs animate-bounce" style={{ animationDuration: '2s' }}>
+            z
+          </span>
+          <span className="text-cyan-400 font-black text-sm animate-pulse -mr-3" style={{ animationDuration: '1.5s' }}>
+            Z
+          </span>
+          <span className="text-cyan-200 font-black text-base animate-bounce -mr-6" style={{ animationDuration: '2.5s' }}>
+            Z
+          </span>
+        </div>
+      )}
+
       {/* 3D Character Container */}
       <div
-        className={`absolute inset-0 flex flex-col items-center transition-transform duration-200 ${
-          isFloating ? 'animate-float' : ''
+        className={`absolute inset-0 flex flex-col items-center transition-all duration-500 ${
+          isSleeping ? 'animate-sleeping' : isFloating ? 'animate-float' : ''
         }`}
         style={{
           transformStyle: 'preserve-3d',
@@ -107,10 +129,18 @@ export default function VoxelCharacter({
 
         {/* Torso & Arms Container */}
         <div className="relative flex items-start mt-0.5" style={{ zIndex: 8 }}>
-          {/* Left Arm (Swings when walking) */}
+          {/* Left Arm (Swings when walking, rubs eye when nudging) */}
           <div
             className={`w-2.5 h-7 rounded-xs shadow-sm origin-top transition-transform ${
-              isWalking ? 'animate-arm-left' : isFloating ? 'rotate-12' : ''
+              isNudgingEyes
+                ? 'animate-rub-left'
+                : isWalking
+                ? 'animate-arm-left'
+                : isSleeping
+                ? 'rotate-45'
+                : isFloating
+                ? 'rotate-12'
+                : ''
             }`}
             style={{
               backgroundColor: colorScheme.shirt,
@@ -138,10 +168,18 @@ export default function VoxelCharacter({
             <div className="absolute bottom-0 inset-x-0 h-1.5 bg-slate-950/60" />
           </div>
 
-          {/* Right Arm (Swings inversely) */}
+          {/* Right Arm (Swings inversely, rubs eye when nudging) */}
           <div
             className={`w-2.5 h-7 rounded-xs shadow-sm origin-top transition-transform ${
-              isWalking ? 'animate-arm-right' : isFloating ? '-rotate-12' : ''
+              isNudgingEyes
+                ? 'animate-rub-right'
+                : isWalking
+                ? 'animate-arm-right'
+                : isSleeping
+                ? '-rotate-45'
+                : isFloating
+                ? '-rotate-12'
+                : ''
             }`}
             style={{
               backgroundColor: colorScheme.shirt,

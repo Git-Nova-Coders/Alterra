@@ -4,6 +4,7 @@
  */
 
 export const GAME_STAGES = {
+  AWAKENING: 'AWAKENING',
   LANDING: 'LANDING',
   WORLD_SELECT: 'WORLD_SELECT',
   WORLD_DIRECTOR: 'WORLD_DIRECTOR',
@@ -25,6 +26,7 @@ export const GAME_STAGES = {
 };
 
 export const STAGE_FLOW_ORDER = [
+  GAME_STAGES.AWAKENING,
   GAME_STAGES.LANDING,
   GAME_STAGES.WORLD_SELECT,
   GAME_STAGES.WORLD_DIRECTOR,
@@ -50,8 +52,8 @@ export const STAGE_FLOW_ORDER = [
  */
 export const INITIAL_GAME_STATE = {
   // Navigation & lifecycle
-  currentStage: GAME_STAGES.LANDING,
-  history: [GAME_STAGES.LANDING],
+  currentStage: GAME_STAGES.AWAKENING,
+  history: [GAME_STAGES.AWAKENING],
 
   // World creation
   world: null,                  // 'cyber' | 'fantasy' | 'mystery' | Object

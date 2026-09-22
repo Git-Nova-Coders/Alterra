@@ -124,6 +124,37 @@ class SoundEngine {
       setTimeout(() => this.playTone(f, 'sine', 0.6, 0.15), i * 80);
     });
   }
+
+  // Awakening deep hum / eye opening
+  playAwakening() {
+    if (this.muted) return;
+    this.playTone(55, 'sine', 2.5, 0.2, 110);
+    setTimeout(() => this.playTone(220, 'sine', 1.8, 0.12, 440), 600);
+    setTimeout(() => this.playTone(528, 'triangle', 1.5, 0.15, 660), 1200);
+  }
+
+  // Subtle footstep
+  playStep() {
+    if (this.muted) return;
+    const pitch = 140 + Math.random() * 40;
+    this.playTone(pitch, 'triangle', 0.05, 0.04, pitch * 0.7);
+  }
+
+  // Portal portal resonance hum
+  playPortalHum() {
+    if (this.muted) return;
+    this.playTone(196, 'sine', 0.8, 0.1, 261.63);
+    setTimeout(() => this.playTone(392, 'triangle', 0.6, 0.08, 523.25), 100);
+  }
+
+  // Pained creature growl
+  playCreatureGrowl() {
+    if (this.muted) return;
+    this.playTone(75, 'sawtooth', 1.4, 0.25, 45);
+    setTimeout(() => this.playTone(90, 'sawtooth', 0.9, 0.2, 60), 200);
+    setTimeout(() => this.playTone(60, 'square', 1.2, 0.15, 35), 450);
+  }
 }
 
 export const AudioService = new SoundEngine();
+

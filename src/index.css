@@ -59,6 +59,57 @@ body {
   background: rgba(56, 189, 248, 0.25);
   border-radius: 3px;
 }
+
+/* Voxel Character Animation Keyframes */
+@keyframes armSwingLeft {
+  0% { transform: rotateX(-28deg); }
+  50% { transform: rotateX(28deg); }
+  100% { transform: rotateX(-28deg); }
+}
+
+@keyframes armSwingRight {
+  0% { transform: rotateX(28deg); }
+  50% { transform: rotateX(-28deg); }
+  100% { transform: rotateX(28deg); }
+}
+
+@keyframes legSwingLeft {
+  0% { transform: rotateX(32deg); }
+  50% { transform: rotateX(-32deg); }
+  100% { transform: rotateX(32deg); }
+}
+
+@keyframes legSwingRight {
+  0% { transform: rotateX(-32deg); }
+  50% { transform: rotateX(32deg); }
+  100% { transform: rotateX(-32deg); }
+}
+
+@keyframes zeroGFloat {
+  0%, 100% { transform: translateY(0px) rotateZ(0deg); }
+  50% { transform: translateY(-12px) rotateZ(2deg); }
+}
+
+.animate-arm-left {
+  animation: armSwingLeft 0.5s infinite linear;
+}
+
+.animate-arm-right {
+  animation: armSwingRight 0.5s infinite linear;
+}
+
+.animate-leg-left {
+  animation: legSwingLeft 0.5s infinite linear;
+}
+
+.animate-leg-right {
+  animation: legSwingRight 0.5s infinite linear;
+}
+
+.animate-float {
+  animation: zeroGFloat 3.5s ease-in-out infinite;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(56, 189, 248, 0.5);
 }

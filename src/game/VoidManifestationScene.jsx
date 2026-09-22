@@ -3,6 +3,9 @@ import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createVoxelCharacterMesh } from './three/VoxelCharacter3D';
 import { InfiniteVoxelTerrainManager } from './three/InfiniteVoxelTerrainManager';
+import { OrbitCameraController } from './three/OrbitCameraController';
+import DialogueBox from '../components/DialogueBox';
+import { DIALOGUE_SCRIPTS } from '../data/dialogueScripts';
 import VirtualJoystick from './VirtualJoystick';
 import { AudioService } from '../services/audioService';
 import { Sparkles, Globe, Compass, ArrowRight, Zap, CheckCircle } from 'lucide-react';
@@ -11,6 +14,7 @@ import { Sparkles, Globe, Compass, ArrowRight, Zap, CheckCircle } from 'lucide-r
  * VoidManifestationScene (Phase 2 of True 3D Engine)
  * 
  * - Full WebGL Canvas with Three.js.
+ * - 360° Free Mouse Orbit Camera.
  * - Boundless extending 3D voxel terrain powered by InfiniteVoxelTerrainManager.
  * - As the character walks in any direction:
  *   - New 3D voxel chunks erupt and physically rise from below the grid.
@@ -27,6 +31,7 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
   const [nearbyShard, setNearbyShard] = useState(null);
   const [portalReady, setPortalReady] = useState(false);
   const [isLeaping, setIsLeaping] = useState(false);
+  const [showDialogue, setShowDialogue] = useState(true);
 
   // Live coordinates displayed in HUD
   const [coords, setCoords] = useState({ x: 0, z: 0 });
@@ -70,13 +75,24 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
       0.1,
       1000
     );
-    camera.position.set(0, 5, 10);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
+
+    // 2. Free Orbit Camera Controller
+    const orbitControls = new OrbitCameraController(camera, renderer.domElement, {
+      radius: 6.8,
+      phi: Math.PI * 0.38,
+      theta: 0,
+      target: new THREE.Vector3(0, 1.4, 0),
+      minRadius: 3.0,
+      maxRadius: 20.0,
+      rotateSpeed: 0.0055,
+      damping: 0.12
+    });
 
     // 2. Lighting
     const ambientLight = new THREE.AmbientLight(
@@ -302,14 +318,9 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
         vortexDisc.rotation.z -= 0.02;
       }
 
-      // Third-Person Camera Follow
-      const camTargetPos = new THREE.Vector3(
-        state.playerPos.x,
-        state.playerPos.y + 4.2,
-        state.playerPos.z + 8.0
-      );
-      camera.position.lerp(camTargetPos, 0.08);
-      camera.lookAt(state.playerPos.x, state.playerPos.y + 1.8, state.playerPos.z);
+      // Update Camera Target to follow player & update Orbit Camera
+      orbitControls.setTarget(state.playerPos.x, state.playerPos.y + 1.4, state.playerPos.z);
+      orbitControls.update(delta);
 
       renderer.render(scene, camera);
     };
@@ -321,6 +332,7 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      orbitControls.dispose();
       terrainManager.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
@@ -443,6 +455,14 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* RPG Dialogue Guidance Box */}
+      {showDialogue && (
+        <DialogueBox
+          dialogues={DIALOGUE_SCRIPTS.VOID_MANIFESTATION}
+          onComplete={() => {}}
+        />
+      )}
 
       {/* Mobile Touch Joystick */}
       <div className="md:hidden">

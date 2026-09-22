@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createVoxelCharacterMesh } from './three/VoxelCharacter3D';
 import { InfiniteVoxelTerrainManager } from './three/InfiniteVoxelTerrainManager';
 import { OrbitCameraController } from './three/OrbitCameraController';
+import DialogueBox from '../components/DialogueBox';
+import { DIALOGUE_SCRIPTS } from '../data/dialogueScripts';
 import VirtualJoystick from './VirtualJoystick';
 import { AudioService } from '../services/audioService';
 import { Eye, Hand, Sparkles, Move, Compass, ArrowUpRight, MousePointer } from 'lucide-react';
@@ -16,6 +18,7 @@ import { Eye, Hand, Sparkles, Move, Compass, ArrowUpRight, MousePointer } from '
  * - 360° Free Mouse Orbit Camera to inspect the character from any angle.
  * - Raycast click/tap on character front triggers eye-nudging animation & awakening.
  * - Procedural terrain seamlessly rises as character awakens into third-person free roam.
+ * - RPG Dialogue & Inner Speech Box guiding the player.
  */
 export default function DarkAwakeningScene({ onAwakened }) {
   const mountRef = useRef(null);
@@ -28,6 +31,7 @@ export default function DarkAwakeningScene({ onAwakened }) {
   const [nudgeProgress, setNudgeProgress] = useState(0); // 0 to 100%
   const [isNudgingArm, setIsNudgingArm] = useState(false);
   const [canTapPrompt, setCanTapPrompt] = useState(false);
+  const [showDialogue, setShowDialogue] = useState(true);
 
   // Controls & 3D state refs for animation loop
   const stateRef = useRef({
@@ -357,9 +361,9 @@ export default function DarkAwakeningScene({ onAwakened }) {
             <Sparkles className="w-4 h-4 text-cyan-400 animate-spin" style={{ animationDuration: '8s' }} />
             <span className="text-xs sm:text-sm text-slate-100 font-bold tracking-widest uppercase">
               {awakenStage === 0
-                ? 'Deep Slumber in the Infinite Zero-G Void'
+                ? 'Zero-G Slumber — 360° Mouse Orbit'
                 : awakenStage === 1
-                ? 'Vision Blurry... Rub Eyes Clean'
+                ? 'Vision Clearing... Nudging Eyes'
                 : 'Reality Awoken: Third-Person Free Roam'}
             </span>
           </motion.div>
@@ -383,7 +387,7 @@ export default function DarkAwakeningScene({ onAwakened }) {
                 </h2>
                 <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
                   {awakenStage === 0
-                    ? 'Drag with your mouse to orbit around the sleeping avatar in darkness. Click directly on his face or tap below to awaken him.'
+                    ? 'Drag with mouse to orbit around the avatar in darkness. Click directly on his face or tap below to awaken.'
                     : 'Gently nudge the eyes to clear the dimensional fog.'}
                 </p>
               </div>
@@ -427,11 +431,19 @@ export default function DarkAwakeningScene({ onAwakened }) {
               </button>
             </motion.div>
             <span className="text-[11px] text-cyan-300/80 bg-slate-950/80 px-4 py-1 rounded-full border border-cyan-500/20">
-              Use WASD / Arrow Keys or Virtual Joystick to walk your 3D character in Third-Person
+              Drag mouse to rotate camera 360° | Use WASD to walk & generate infinite terrain
             </span>
           </div>
         )}
       </div>
+
+      {/* RPG Dialogue & Inner Monologue Box */}
+      {showDialogue && (
+        <DialogueBox
+          dialogues={awakenStage < 2 ? DIALOGUE_SCRIPTS.AWAKENING_SLEEP : DIALOGUE_SCRIPTS.AWAKENING_AWAKE}
+          onComplete={() => {}}
+        />
+      )}
 
       {/* Mobile Touch Joystick */}
       {awakenStage === 2 && (

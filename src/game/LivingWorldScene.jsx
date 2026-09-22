@@ -3,6 +3,9 @@ import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createVoxelCharacterMesh } from './three/VoxelCharacter3D';
 import { InfiniteVoxelTerrainManager } from './three/InfiniteVoxelTerrainManager';
+import { OrbitCameraController } from './three/OrbitCameraController';
+import DialogueBox from '../components/DialogueBox';
+import { DIALOGUE_SCRIPTS } from '../data/dialogueScripts';
 import VirtualJoystick from './VirtualJoystick';
 import { useGameState, GAME_ACTIONS } from '../context/GameStateContext';
 import { GAME_STAGES } from '../data/gameState';
@@ -23,6 +26,7 @@ import {
  * LivingWorldScene (Phase 4 of True 3D Engine)
  * 
  * - Full WebGL Canvas with Three.js.
+ * - 360° Free Mouse Orbit Camera.
  * - Boundless extending 3D living world generated via InfiniteVoxelTerrainManager.
  * - 3D Rigged Roblox Voxel Character with Third-Person Follow Camera.
  * - 3D Animated Wounded Creature model placed in the extending terrain:
@@ -31,6 +35,7 @@ import {
  * - Interactive moral decision modal (Soothe & Heal, Harness Core, Slip Past):
  *   - Mutates the real-time WebGL world lighting, fog, and voxel colors!
  * - Boundless exploration with live coordinates displayed.
+ * - RPG Dialogue & Subtitles guiding the player to the anomaly.
  */
 export default function LivingWorldScene() {
   const mountRef = useRef(null);
@@ -44,6 +49,7 @@ export default function LivingWorldScene() {
   const [choiceMade, setChoiceMade] = useState(state.encounterChoice || null);
   const [environmentToned, setEnvironmentToned] = useState(null);
   const [coords, setCoords] = useState({ x: 0, z: 0 });
+  const [showDialogue, setShowDialogue] = useState(true);
 
   const creaturePos3D = useRef(new THREE.Vector3(28, 1.8, -35));
 
@@ -78,13 +84,24 @@ export default function LivingWorldScene() {
       0.1,
       1000
     );
-    camera.position.set(0, 5, 10);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
+
+    // Free Orbit Camera Controller
+    const orbitControls = new OrbitCameraController(camera, renderer.domElement, {
+      radius: 6.5,
+      phi: Math.PI * 0.38,
+      theta: 0,
+      target: new THREE.Vector3(0, 1.4, 0),
+      minRadius: 3.0,
+      maxRadius: 20.0,
+      rotateSpeed: 0.0055,
+      damping: 0.12
+    });
 
     // 2. Lighting (Dynamic according to moral choice)
     const ambientLight = new THREE.AmbientLight(0x0284c7, 1.3);
@@ -283,14 +300,9 @@ export default function LivingWorldScene() {
         coreMat.emissive.setHex(0x059669);
       }
 
-      // Third-Person Camera Follow
-      const camTargetPos = new THREE.Vector3(
-        state.playerPos.x,
-        state.playerPos.y + 4.2,
-        state.playerPos.z + 8.0
-      );
-      camera.position.lerp(camTargetPos, 0.08);
-      camera.lookAt(state.playerPos.x, state.playerPos.y + 1.8, state.playerPos.z);
+      // Update Camera Target to follow player & update Orbit Camera
+      orbitControls.setTarget(state.playerPos.x, state.playerPos.y + 1.4, state.playerPos.z);
+      orbitControls.update(delta);
 
       renderer.render(scene, camera);
     };
@@ -302,6 +314,7 @@ export default function LivingWorldScene() {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      orbitControls.dispose();
       terrainManager.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
@@ -456,6 +469,14 @@ export default function LivingWorldScene() {
             World shifted towards {choiceMade === 'help' ? 'Harmony 🌿' : choiceMade === 'take' ? 'Dominion ⚡' : 'Shadows 🕶️'}
           </span>
         </motion.div>
+      )}
+
+      {/* RPG Dialogue Guidance Box */}
+      {showDialogue && !choiceMade && (
+        <DialogueBox
+          dialogues={DIALOGUE_SCRIPTS.LIVING_WORLD_CREATURE}
+          onComplete={() => {}}
+        />
       )}
 
       {/* Mobile Touch Joystick */}

@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createVoxelCharacterMesh } from './three/VoxelCharacter3D';
+import { OrbitCameraController } from './three/OrbitCameraController';
+import DialogueBox from '../components/DialogueBox';
+import { DIALOGUE_SCRIPTS } from '../data/dialogueScripts';
 import VirtualJoystick from './VirtualJoystick';
 import { WORLDS } from '../data/worlds';
 import { AudioService } from '../services/audioService';
@@ -20,6 +23,7 @@ import {
  * NexusGatesScene (Phase 3 of True 3D Engine)
  * 
  * - Full WebGL Canvas with Three.js.
+ * - 360° Free Mouse Orbit Camera.
  * - Boundless celestial platform floating in deep 3D cosmos.
  * - 3 Massive 3D Volumetric Gateways:
  *   1. Cybernetic Gate (Neo-Kowloon 2099 - glowing cyan archway & energetic portal disc)
@@ -40,6 +44,7 @@ export default function NexusGatesScene({ onSelectWorld }) {
 
   const [hoveredEntity, setHoveredEntity] = useState(null);
   const [enteringGate, setEnteringGate] = useState(null);
+  const [showDialogue, setShowDialogue] = useState(true);
 
   const stateRef = useRef({
     keys: {},
@@ -135,6 +140,18 @@ export default function NexusGatesScene({ onSelectWorld }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
+
+    // Free Orbit Camera Controller
+    const orbitControls = new OrbitCameraController(camera, renderer.domElement, {
+      radius: 7.5,
+      phi: Math.PI * 0.38,
+      theta: 0,
+      target: new THREE.Vector3(0, 1.4, 12),
+      minRadius: 3.5,
+      maxRadius: 22.0,
+      rotateSpeed: 0.0055,
+      damping: 0.12
+    });
 
     // 2. Lighting
     const ambientLight = new THREE.AmbientLight(0x0e7490, 1.2);
@@ -389,14 +406,9 @@ export default function NexusGatesScene({ onSelectWorld }) {
       state.hoveredEntity = closest;
       setHoveredEntity(closest);
 
-      // Third-Person Camera
-      const camTargetPos = new THREE.Vector3(
-        state.playerPos.x,
-        state.playerPos.y + 4.5,
-        state.playerPos.z + 8.5
-      );
-      camera.position.lerp(camTargetPos, 0.08);
-      camera.lookAt(state.playerPos.x, state.playerPos.y + 1.8, state.playerPos.z);
+      // Update Orbit Camera Target & Position
+      orbitControls.setTarget(state.playerPos.x, state.playerPos.y + 1.4, state.playerPos.z);
+      orbitControls.update(delta);
 
       renderer.render(scene, camera);
     };
@@ -408,6 +420,7 @@ export default function NexusGatesScene({ onSelectWorld }) {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      orbitControls.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -654,6 +667,14 @@ export default function NexusGatesScene({ onSelectWorld }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* RPG Dialogue Guidance Box */}
+      {showDialogue && (
+        <DialogueBox
+          dialogues={DIALOGUE_SCRIPTS.NEXUS_GATES}
+          onComplete={() => {}}
+        />
+      )}
 
       {/* Mobile Touch Joystick */}
       <div className="md:hidden">

@@ -15,90 +15,99 @@ import {
   Trees,
   Layers,
   Flame,
-  Radio
+  Radio,
+  Boxes,
+  Compass
 } from 'lucide-react';
 
 /**
  * Void Manifestation Scene (Phase 3)
- * The player lands in an empty, desolate void grid with zero landmarks.
- * Mysterious floating anomalies pulse in the distance.
- * As the player walks to each anomaly and interacts or bypasses it:
- * - Real-time world tiles (cyber neon blocks, emerald fantasy foliage, or cosmic monoliths) erupt from the ground.
- * - Manifestation gauge rises from 0% -> 100%.
- * - When 100% is reached, a glowing Genesis Vortex portal erupts.
- * - Player runs and leaps through the portal into the living world they created.
+ * 
+ * The player lands in an empty, desolate void space where nothing exists as far as the eye can see.
+ * As the player walks through the void and interacts with dimensional resonance anomalies:
+ * 1. 3D Voxel Terrain blocks (cyber neon grids, emerald woodland moss, or cosmic obsidian monoliths)
+ *    physically erupt and rise from below the grid in real-time.
+ * 2. Walking leaves procedural trail blocks that solidify reality behind the player's footsteps.
+ * 3. Activating anomalies triggers thematic terrain explosions (trees, cyber towers, crystalline spires).
+ * 4. Manifestation gauge scales from 0% to 100%.
+ * 5. At 100%, a swirling Genesis Vortex portal ruptures at the center.
+ * 6. The character physically runs towards and leaps through the portal into their created living world!
  */
 export default function VoidManifestationScene({ world, onWorldManifested }) {
   const worldId = world?.id || 'cyber';
   const accentColor = world?.accentColor || '#00f0ff';
 
   // Player position in the boundless void grid
-  const [playerPos, setPlayerPos] = useState({ x: 0, y: 40 });
+  const [playerPos, setPlayerPos] = useState({ x: 0, y: 50 });
   const [direction, setDirection] = useState('down');
   const [isWalking, setIsWalking] = useState(false);
 
-  // Manifested terrain blocks created by the player's movement & interactions
+  // Manifested 3D terrain blocks created by player's movement & anomaly interactions
   const [manifestedBlocks, setManifestedBlocks] = useState([]);
-  const [manifestScore, setManifestScore] = useState(0); // 0 to 100
+  const [manifestScore, setManifestScore] = useState(0); // 0 to 100%
   const [activeAnomaly, setActiveAnomaly] = useState(null);
   const [leaping, setLeaping] = useState(false);
 
   const keysPressed = useRef({});
   const lastStep = useRef(0);
 
-  // Anomaly nodes in the empty void
+  // Dimensional Resonance Anomalies in the void
   const [anomalies, setAnomalies] = useState([
     {
       id: 'anom-1',
-      x: -160,
-      y: -90,
-      title: 'Dormant Memory Core',
+      x: -180,
+      y: -80,
+      title: 'Lithic Foundation Shard',
       type: 'terrain',
       icon: '💎',
-      desc: 'Injects topological structures into the void grid.',
-      collected: false
+      desc: 'Extrudes 3D structural voxel bedrock across the sector.',
+      collected: false,
+      blockColor: worldId === 'cyber' ? '#00f0ff' : worldId === 'fantasy' ? '#10b981' : '#a855f7'
     },
     {
       id: 'anom-2',
-      x: 180,
-      y: -80,
-      title: 'Atmospheric Spark',
+      x: 190,
+      y: -90,
+      title: 'Atmospheric Pulse Matrix',
       type: 'atmosphere',
       icon: '⚡',
-      desc: 'Synthesizes weather particle systems and ambient lighting.',
-      collected: false
+      desc: 'Ignites weather particle systems and dynamic skybox radiance.',
+      collected: false,
+      blockColor: worldId === 'cyber' ? '#38bdf8' : worldId === 'fantasy' ? '#34d399' : '#c084fc'
     },
     {
       id: 'anom-3',
-      x: -190,
+      x: -210,
       y: 90,
-      title: 'Biorhythm Matrix',
+      title: 'Biorhythm Seed',
       type: 'life',
       icon: '🌱',
-      desc: 'Spawns vegetation, energy pylons, and primordial biomes.',
-      collected: false
+      desc: 'Grows procedural biome foliage, cyber circuits, or cosmic crystals.',
+      collected: false,
+      blockColor: worldId === 'cyber' ? '#06b6d4' : worldId === 'fantasy' ? '#059669' : '#9333ea'
     },
     {
       id: 'anom-4',
-      x: 170,
-      y: 100,
-      title: 'Gravitational Anchor',
+      x: 180,
+      y: 110,
+      title: 'Gravimetric Horizon Anchor',
       type: 'physics',
       icon: '🔮',
-      desc: 'Solidifies physical ground and horizon boundary laws.',
-      collected: false
+      desc: 'Locks elevation boundaries and gravitational mass constants.',
+      collected: false,
+      blockColor: worldId === 'cyber' ? '#2563eb' : worldId === 'fantasy' ? '#047857' : '#7e22ce'
     }
   ]);
 
   // Genesis Portal (spawns at center when score >= 100)
   const portalReady = manifestScore >= 100;
 
-  // Proximity to anomalies or portal
+  // Proximity detection loop
   useEffect(() => {
     if (portalReady) {
       const distToCenter = Math.hypot(playerPos.x, playerPos.y);
-      if (distToCenter < 65) {
-        setActiveAnomaly({ id: 'genesis-portal', title: 'Genesis Vortex' });
+      if (distToCenter < 70) {
+        setActiveAnomaly({ id: 'genesis-portal', title: 'Genesis Vortex Portal' });
         return;
       }
     }
@@ -107,7 +116,7 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
     for (const anom of anomalies) {
       if (anom.collected) continue;
       const dist = Math.hypot(playerPos.x - anom.x, playerPos.y - anom.y);
-      if (dist < 70) {
+      if (dist < 75) {
         nearby = anom;
         break;
       }
@@ -115,7 +124,7 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
     setActiveAnomaly(nearby);
   }, [playerPos, anomalies, portalReady]);
 
-  // Movement & procedural ground generation while walking
+  // Movement & procedural ground extrusion while walking
   useEffect(() => {
     if (leaping) return;
 
@@ -151,19 +160,20 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
       if (dx !== 0 || dy !== 0) {
         setIsWalking(true);
         setPlayerPos((prev) => {
-          const nextX = Math.max(-320, Math.min(320, prev.x + dx));
-          const nextY = Math.max(-170, Math.min(170, prev.y + dy));
+          const nextX = Math.max(-330, Math.min(330, prev.x + dx));
+          const nextY = Math.max(-175, Math.min(175, prev.y + dy));
 
-          // Every few steps, leave a manifested ground tile
-          if (Math.random() < 0.18) {
+          // Procedurally leave 3D manifested voxel tiles along footsteps
+          if (Math.random() < 0.22) {
             setManifestedBlocks((blocks) => {
-              if (blocks.length > 35) return blocks.slice(1); // keep bounded
+              if (blocks.length > 50) return blocks.slice(1); // keep optimal performance
               return [
                 ...blocks,
                 {
                   id: Math.random(),
-                  x: Math.round(nextX / 25) * 25,
-                  y: Math.round(nextY / 25) * 25,
+                  x: Math.round(nextX / 28) * 28,
+                  y: Math.round(nextY / 28) * 28,
+                  height: 12 + Math.floor(Math.random() * 14),
                   type: worldId,
                   time: Date.now()
                 }
@@ -191,26 +201,28 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
     };
   }, [activeAnomaly, leaping, worldId]);
 
-  // Interacting with an anomaly manifests a large segment of the world
+  // Interacting with an anomaly creates a 3D terrain cluster eruption
   const interactWithAnomaly = (anom) => {
     AudioService.playTone(520, 'sine', 0.5, 0.2, 780);
     setAnomalies((prev) =>
       prev.map((a) => (a.id === anom.id ? { ...a, collected: true } : a))
     );
 
-    // Add cluster of manifested terrain around the anomaly
+    // Erupt a 3D block cluster around the anomaly
     const newTiles = [];
-    for (let ox = -40; ox <= 40; ox += 25) {
-      for (let oy = -40; oy <= 40; oy += 25) {
+    for (let ox = -50; ox <= 50; ox += 28) {
+      for (let oy = -50; oy <= 50; oy += 28) {
         newTiles.push({
           id: Math.random(),
           x: anom.x + ox,
           y: anom.y + oy,
+          height: 16 + Math.floor(Math.random() * 20),
           type: worldId,
           time: Date.now()
         });
       }
     }
+
     setManifestedBlocks((prev) => [...prev, ...newTiles]);
     setManifestScore((prev) => Math.min(100, prev + 25));
   };
@@ -220,7 +232,7 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
     AudioService.playTone(300, 'sine', 1.5, 0.3, 900);
     setTimeout(() => {
       if (onWorldManifested) onWorldManifested();
-    }, 1200);
+    }, 1300);
   };
 
   const handleJoystickMove = ({ x, y, isMoving: moving, direction: dir }) => {
@@ -229,8 +241,8 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
     if (dir) setDirection(dir);
     if (moving) {
       setPlayerPos((prev) => ({
-        x: Math.max(-320, Math.min(320, prev.x + x * 4.5)),
-        y: Math.max(-170, Math.min(170, prev.y + y * 4.5))
+        x: Math.max(-330, Math.min(330, prev.x + x * 4.5)),
+        y: Math.max(-175, Math.min(175, prev.y + y * 4.5))
       }));
       const now = Date.now();
       if (now - lastStep.current > 300) {
@@ -255,7 +267,7 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
         <div
           className="absolute inset-0 transition-opacity duration-700"
           style={{
-            background: `radial-gradient(circle at 50% 50%, ${accentColor}18 0%, transparent 70%)`,
+            background: `radial-gradient(circle at 50% 50%, ${accentColor}22 0%, transparent 70%)`,
             opacity: manifestScore / 100
           }}
         />
@@ -267,7 +279,7 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold tracking-widest text-cyan-400 flex items-center gap-1.5 uppercase">
               <Globe className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '12s' }} />
-              Genesis Engine: Manifesting Reality
+              Genesis Engine: 3D Void Manifestation
             </span>
             <span className="font-black text-white bg-cyan-950/80 px-2.5 py-0.5 rounded border border-cyan-500/40">
               {manifestScore}%
@@ -285,34 +297,38 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
 
           <p className="text-[11px] text-slate-400 text-center">
             {manifestScore < 100
-              ? 'Walk through the empty void and interact with resonance anomalies to materialize your world.'
-              : '🌟 World manifestation complete! A Genesis Vortex has ruptured at the center. Jump in!'}
+              ? 'Walk through the desolate void to extrude 3D terrain and gather anomaly shards.'
+              : '🌟 Manifestation complete! The Genesis Vortex is open at center. Run and leap in!'}
           </p>
         </div>
       </div>
 
       {/* Playable Stage Area */}
-      <div className="relative z-20 w-full max-w-4xl h-[460px] flex items-center justify-center">
-        {/* Manifested Ground Tiles (Erupting blocks) */}
+      <div className="relative z-20 w-full max-w-5xl h-[500px] flex items-center justify-center">
+        {/* Manifested 3D Voxel Ground Blocks */}
         {manifestedBlocks.map((b) => (
           <motion.div
             key={b.id}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.85 }}
-            transition={{ duration: 0.3 }}
-            className="absolute rounded-xs pointer-events-none shadow-sm"
+            initial={{ scaleY: 0, opacity: 0 }}
+            animate={{ scaleY: 1, opacity: 0.9 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="absolute rounded-xs pointer-events-none shadow-md"
             style={{
-              left: `calc(50% + ${b.x}px - 12px)`,
-              top: `calc(50% + ${b.y}px - 12px)`,
-              width: '24px',
-              height: '24px',
+              left: `calc(50% + ${b.x}px - 14px)`,
+              top: `calc(50% + ${b.y}px - 14px)`,
+              width: '28px',
+              height: `${b.height}px`,
+              transformOrigin: 'bottom center',
               backgroundColor:
                 b.type === 'cyber'
                   ? '#0e3a5a'
                   : b.type === 'fantasy'
                   ? '#064e3b'
                   : '#3b0764',
-              border: `1px solid ${accentColor}50`
+              borderTop: `2px solid ${accentColor}`,
+              borderLeft: `1px solid ${accentColor}40`,
+              borderRight: `1px solid ${accentColor}40`,
+              boxShadow: `0 4px 10px rgba(0,0,0,0.5), inset 0 2px 5px ${accentColor}44`
             }}
           />
         ))}
@@ -327,31 +343,31 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
               onClick={() => interactWithAnomaly(anom)}
               className="absolute flex flex-col items-center cursor-pointer group"
               style={{
-                left: `calc(50% + ${anom.x}px - 40px)`,
-                top: `calc(50% + ${anom.y}px - 40px)`,
-                width: '80px'
+                left: `calc(50% + ${anom.x}px - 45px)`,
+                top: `calc(50% + ${anom.y}px - 45px)`,
+                width: '90px'
               }}
             >
               <motion.div
                 animate={{
-                  y: [0, -8, 0],
+                  y: [0, -10, 0],
                   scale: isNearby ? 1.15 : 1
                 }}
                 transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
-                className="w-14 h-14 rounded-2xl bg-slate-900/80 border-2 flex items-center justify-center text-2xl shadow-lg backdrop-blur-sm"
+                className="w-14 h-14 rounded-2xl bg-slate-900/90 border-2 flex items-center justify-center text-2xl shadow-xl backdrop-blur-sm"
                 style={{
                   borderColor: isNearby ? '#ffffff' : `${accentColor}80`,
-                  boxShadow: isNearby ? `0 0 25px ${accentColor}` : `0 0 10px ${accentColor}40`
+                  boxShadow: isNearby ? `0 0 30px ${accentColor}` : `0 0 12px ${accentColor}40`
                 }}
               >
                 <span>{anom.icon}</span>
               </motion.div>
-              <span className="text-[10px] font-bold text-slate-300 mt-1.5 text-center leading-tight">
+              <span className="text-[10px] font-bold text-slate-200 mt-1.5 text-center leading-tight">
                 {anom.title}
               </span>
               {isNearby && (
-                <span className="text-[9px] font-black text-cyan-300 bg-black/80 px-2 py-0.5 rounded mt-0.5 animate-pulse border border-cyan-500/40">
-                  ACTIVATE [SPACE]
+                <span className="text-[9px] font-black text-cyan-300 bg-black/90 px-2 py-0.5 rounded mt-1 animate-pulse border border-cyan-500/50">
+                  EXTRUDE [SPACE]
                 </span>
               )}
             </div>
@@ -364,25 +380,25 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
             onClick={triggerGenesisLeap}
             className="absolute flex flex-col items-center cursor-pointer group"
             style={{
-              left: 'calc(50% - 60px)',
-              top: 'calc(50% - 60px)',
-              width: '120px'
+              left: 'calc(50% - 65px)',
+              top: 'calc(50% - 65px)',
+              width: '130px'
             }}
           >
             <motion.div
               animate={{ rotate: 360, scale: [1, 1.1, 1] }}
               transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
-              className="w-28 h-28 rounded-full border-4 flex items-center justify-center overflow-hidden"
+              className="w-32 h-32 rounded-full border-4 flex items-center justify-center overflow-hidden"
               style={{
                 borderColor: '#ffffff',
-                boxShadow: `0 0 50px ${accentColor}, inset 0 0 30px ${accentColor}`,
-                background: `radial-gradient(circle, ${accentColor} 0%, rgba(15,23,42,0.8) 70%)`
+                boxShadow: `0 0 60px ${accentColor}, inset 0 0 35px ${accentColor}`,
+                background: `radial-gradient(circle, ${accentColor} 0%, rgba(15,23,42,0.85) 75%)`
               }}
             >
-              <span className="text-4xl filter drop-shadow-md">🌀</span>
+              <span className="text-5xl filter drop-shadow-lg animate-pulse">🌀</span>
             </motion.div>
             <div className="mt-2 px-3 py-1 bg-white text-slate-950 font-black text-xs rounded-full shadow-2xl animate-bounce">
-              JUMP IN [SPACE]
+              LEAP IN [SPACE]
             </div>
           </div>
         )}
@@ -419,9 +435,9 @@ export default function VoidManifestationScene({ world, onWorldManifested }) {
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1.2, opacity: 1 }}
-              className="text-slate-950 text-2xl font-black tracking-widest uppercase text-center"
+              className="text-slate-950 text-2xl font-black tracking-widest uppercase text-center drop-shadow"
             >
-              DIVING INTO YOUR MANIFEST REALITY...
+              ENTERING YOUR CREATED REALITY...
             </motion.div>
           </motion.div>
         )}

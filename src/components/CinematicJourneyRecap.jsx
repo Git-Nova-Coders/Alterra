@@ -208,26 +208,33 @@ export default function CinematicJourneyRecap() {
                   />
                 ))}
 
-                {/* Floating Voxel Character Waking Up */}
+                {/* Floating Voxel Character Waking Up from Sleeping posture */}
                 <motion.div
-                  initial={{ y: 25, rotateZ: -8 }}
-                  animate={{ y: 0, rotateZ: 0 }}
-                  transition={{ duration: 3, ease: 'easeOut' }}
+                  initial={{ y: 25, rotateX: 60, scale: 1.5 }}
+                  animate={{ y: 0, rotateX: 0, scale: 1.8 }}
+                  transition={{ duration: 3.2, ease: 'easeOut' }}
                   className="relative z-10 flex flex-col items-center"
+                  style={{ perspective: 800 }}
                 >
-                  <VoxelCharacter isFloating={true} eyesClosed={false} scale={1.8} />
+                  <VoxelCharacter
+                    isFloating={true}
+                    isSleeping={false}
+                    isNudgingEyes={false}
+                    eyesClosed={false}
+                    scale={1.8}
+                  />
                 </motion.div>
 
                 {/* Visual Icon Card */}
                 <motion.div
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.5 }}
-                  className="absolute bottom-6 z-10 flex items-center gap-2 text-2xl bg-black/60 px-4 py-1.5 rounded-full border border-cyan-500/30 backdrop-blur-md"
+                  transition={{ delay: 1.2 }}
+                  className="absolute bottom-6 z-10 flex items-center gap-2 text-2xl bg-black/70 px-5 py-2 rounded-full border border-cyan-500/40 backdrop-blur-md shadow-lg"
                 >
-                  <span>🌌</span>
+                  <span>😴</span>
                   <span className="text-xs font-bold text-cyan-300 tracking-wider">
-                    PROLOGUE // THE AWAKENING IN ZERO-G
+                    PROLOGUE // SLUMBER & AWAKENING IN THE VOID
                   </span>
                   <span>👁️</span>
                 </motion.div>
